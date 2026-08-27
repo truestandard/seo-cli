@@ -60,7 +60,7 @@ projects                      list projects
 use <slug>                    set the default project
 project [show [slug]|create]  show or create a project
 context [get|set <key> <text>|add-competitor <domain>|add-page <path>|log <kind> <summary>]
-keywords [list|add <kw...> --track --path --set --locked|remove <id...>]
+keywords [list|add <kw...> --track --path --set --locked|update <id> --path --track --status|remove <id...>]
 research <seeds...> --limit --max-kd [--keywords]        paid
 serp <keyword> --depth                                    paid
 track [run --live|--scheduled --set | status <id>]        paid
@@ -68,7 +68,10 @@ ranks --since 7d --set guarantee
 prompts [list|add <text...> --set --locked --file]
 ai [run --set --runs | results --since 30d --set | status <id>]   paid (run)
 floor <keywords...>                                       paid
-backlinks [domain]                                        paid
+backlinks [domain] --history --months 12 --rows 200       paid
+domain [domain] --limit 100 --force                       paid (cached 12h)
+mentions --brand --competitor <name>... --force           paid (~$0.85, cached 24h)
+audit [run --lighthouse --pages 20 --max-pages 500 | show <id> | list]   paid only with --lighthouse
 gsc [import <csv> --dimension query|page --start --end | striking]
 ship <url> --keyword --track --note
 experiments [list|add <change> --page --hypothesis|outcome <id> <text>]
@@ -130,7 +133,33 @@ seo serp "seo cli" --depth 20
 
 `ship` fetches the URL unauthenticated and records `http_status`, the `<h1>`, and `verified`.
 
-### 6. MCP for coding agents
+### 6. Domain, backlinks, AI mentions
+
+```
+seo domain rival.example --limit 50
+seo backlinks --history --rows 200
+seo mentions --competitor "Rival One" --dry-run
+seo mentions --competitor "Rival One"
+```
+
+`domain` prints organic traffic and keyword count, the top keywords by traffic with position, volume, CPC, and URL, then the top pages. The backend caches each domain for 12 hours; add `--force` to buy fresh data.
+
+`backlinks --history` adds one row per month (backlinks, referring domains, new, lost); `--rows N` lists the top N referring domains with dofollow counts.
+
+`mentions` reports how often the brand appears in ChatGPT and Google AI answers, the pages those answers cite, sample prompts, and share of voice against any `--competitor`. Cached 24 hours.
+
+### 7. Site audit
+
+```
+seo audit run
+seo audit run --lighthouse --pages 10
+seo audit show 7
+seo audit list
+```
+
+The crawl is the backend's own (sitemap index aware, key pages, retired paths must be 410) and costs nothing. It runs in the background: `run` returns the run id, `show` prints the summary, issues with severity and fix, and Lighthouse scores when `--lighthouse` was set.
+
+### 8. MCP for coding agents
 
 `seo mcp` fetches `tools/list` from the backend at startup and proxies every `tools/call`, so the tool set is whatever the backend serves. It uses the same config and env vars as the CLI and fills in the default project when a tool takes one and the caller omits it.
 

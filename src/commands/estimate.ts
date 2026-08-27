@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { globalOptions } from "../context.js";
 
-export const PAID_COMMANDS = ["research", "serp", "track", "ai", "floor", "backlinks"];
+export const PAID_COMMANDS = ["research", "serp", "track", "ai", "floor", "backlinks", "domain", "mentions", "audit"];
 
 export function registerEstimate(program: Command, buildProgram: () => Command): void {
   program

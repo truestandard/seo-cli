@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import type { KeywordInput } from "../client.js";
 import { buildContext, emit, intOption } from "../context.js";
-import { asRows, table } from "../output.js";
+import { asObject, asRows, table } from "../output.js";
 
 type AddOptions = { track?: string; path?: string; set?: string; locked?: boolean; volume?: number; kd?: number };
 
@@ -50,6 +50,27 @@ export function registerKeywords(program: Command): void {
         return rows.length > 0
           ? table(rows, ["id", "keyword", "set_name", "track", "target_path", "locked"], KEYWORD_HEADERS)
           : `added ${texts.length} keyword${texts.length === 1 ? "" : "s"}`;
+      });
+    });
+
+  keywords
+    .command("update <id>")
+    .description("update a keyword's target path, track, or status (locked keywords accept status only)")
+    .option("--path <path>", "target path on the site")
+    .option("--track <track>", "track label, e.g. bofu, brand")
+    .option("--status <status>", "tracked, paused, or retired")
+    .action(async (id: string, options: { path?: string; track?: string; status?: string }, command: Command) => {
+      const context = buildContext(command);
+      const patch: Partial<KeywordInput> = {
+        ...(options.path !== undefined && { target_path: options.path }),
+        ...(options.track !== undefined && { track: options.track }),
+        ...(options.status !== undefined && { status: options.status }),
+      };
+      if (Object.keys(patch).length === 0) throw new Error("pass at least one of --path, --track, --status");
+      const data = await context.client.updateKeyword(context.requireProject(), id, patch);
+      emit(context, data, () => {
+        const row = asObject(asObject(data)?.keyword) ?? asObject(data);
+        return row ? table([row], ["id", "keyword", "set_name", "status", "track", "target_path", "locked"], KEYWORD_HEADERS) : `updated ${id}`;
       });
     });
 

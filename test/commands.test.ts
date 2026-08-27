@@ -143,3 +143,154 @@ describe("locked sets", () => {
     expect(output).toContain("yes");
   });
 });
+
+describe("domain", () => {
+  it("sends domain, limit and dry_run and prints the estimate", async () => {
+    respondWith(200, { estimate: { cost: 0.04092, domain: "rival.example", limit: 20 } });
+    await run("domain", "rival.example", "--limit", "20", "--dry-run");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/domain_overview");
+    expect(calls[0]?.body).toEqual({ domain: "rival.example", limit: 20, dry_run: true });
+    expect(output).toBe("estimate $0.0409 (domain=rival.example limit=20) — dry run, nothing spent\n");
+  });
+
+  it("renders traffic, keywords, top keywords, top pages and the cache line", async () => {
+    respondWith(200, {
+      domain: "demo.example",
+      organic_traffic: 1844,
+      organic_keywords: 541,
+      top_keywords: [{ keyword: "ferritin levels", position: 2, volume: 9900, traffic: 610, cpc: 0.4, url: "https://demo.example/f" }],
+      top_pages: [{ url: "https://demo.example/f", traffic: 402.9, keywords: 58 }],
+      cached: true,
+      cached_at: "2026-08-27T10:00:00Z",
+    });
+    await run("domain");
+    expect(calls[0]?.body).toEqual({});
+    expect(output).toBe(
+      [
+        "domain=demo.example organic_traffic=1844 organic_keywords=541",
+        "top keywords",
+        "keyword          position  volume  traffic  cpc  url",
+        "ferritin levels         2    9900      610  0.4  https://demo.example/f",
+        "top pages",
+        "url                     traffic  keywords",
+        "https://demo.example/f    402.9        58",
+        "cached 2026-08-27T10:00:00Z — nothing spent",
+        "",
+      ].join("\n"),
+    );
+  });
+});
+
+describe("mentions", () => {
+  it("sends brand, competitors and dry_run", async () => {
+    respondWith(200, { estimate: { cost: 1.08, requests: 8 } });
+    await run("mentions", "--brand", "Demo", "--competitor", "Rival One", "--competitor", "Rival Two", "--dry-run");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/llm_mentions");
+    expect(calls[0]?.body).toEqual({ brand: "Demo", competitors: ["Rival One", "Rival Two"], dry_run: true });
+    expect(output).toBe("estimate $1.08 (requests=8) — dry run, nothing spent\n");
+  });
+
+  it("renders per-platform mentions, share of voice, prompts and cost", async () => {
+    respondWith(200, {
+      brand: "Demo",
+      platforms: {
+        chat_gpt: { mentions: 42, ai_search_volume: 15300, top_pages: [{ url: "https://demo.example/f", mentions: 17 }], sample_prompts: [{ question: "normal ferritin", ai_search_volume: 8100, cites_own: true }] },
+        google: { mentions: 30, ai_search_volume: 9000, top_pages: [], sample_prompts: [] },
+      },
+      share_of_voice: { Demo: 100 },
+      cached: false,
+      cost: 0.85,
+    });
+    await run("mentions");
+    expect(calls[0]?.body).toEqual({});
+    expect(output).toContain("platform  mentions  ai_search_volume  top_page");
+    expect(output).toContain("chat_gpt        42             15300  https://demo.example/f");
+    expect(output).toContain("share of voice Demo=100");
+    expect(output).toContain("chat_gpt prompts");
+    expect(output).toContain("normal ferritin              8100  yes");
+    expect(output.trimEnd().endsWith("cost $0.85")).toBe(true);
+  });
+});
+
+describe("audit", () => {
+  it("run enqueues with lighthouse flags and prints the run id", async () => {
+    respondWith(202, { status: "enqueued", run_id: 7, estimate: { cost: 0.05 } });
+    await run("audit", "run", "--lighthouse", "--pages", "10", "--max-pages", "200");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/site_audits");
+    expect(calls[0]?.body).toEqual({ lighthouse: true, pages: 10, max_pages: 200 });
+    expect(output).toBe("site audit run 7 enqueued — seo audit show 7\n");
+  });
+
+  it("run --dry-run prints the estimate", async () => {
+    respondWith(200, { estimate: { cost: 0, lighthouse_pages: 0 } });
+    await run("audit", "--dry-run");
+    expect(calls[0]?.body).toEqual({ dry_run: true });
+    expect(output).toBe("estimate $0.0 (lighthouse_pages=0) — dry run, nothing spent\n");
+  });
+
+  it("show renders summary, issues and lighthouse", async () => {
+    respondWith(200, {
+      site_audit_run: {
+        id: 7,
+        status: "completed",
+        pages_count: 3,
+        issue_counts: { critical: 1, warning: 0, info: 0 },
+        cost: 0.01,
+        issues: [{ severity: "critical", rule: "sitemap_non_200", url: "https://demo.example/gone", detail: "HTTP 404", how_to_fix: "fix" }],
+        summary: { key_pages: { "/": 200, "/robots.txt": 200 }, retired: {}, lighthouse: { "https://demo.example/": { performance: 0.41, seo: 0.92, accessibility: 0.88, best_practices: 0.96 } } },
+      },
+    });
+    await run("audit", "show", "7");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/site_audits/7");
+    expect(output).toContain('issues  {"critical":1,"warning":0,"info":0}');
+    expect(output).toContain("key pages /=200 /robots.txt=200");
+    expect(output).toContain("critical  sitemap_non_200  https://demo.example/gone  HTTP 404");
+    expect(output).toContain("https://demo.example/         0.41  0.92           0.88            0.96");
+  });
+
+  it("list prints runs", async () => {
+    respondWith(200, { site_audit_runs: [{ id: 7, status: "completed", pages_count: 3, issue_counts: { critical: 1, warning: 2, info: 5 }, cost: 0, created_at: "2026-08-27" }] });
+    await run("audit", "list", "--limit", "5");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/site_audits?limit=5");
+    expect(output.split("\n")[0]).toBe("id  status     pages  critical  warning  info  cost  created_at");
+  });
+});
+
+describe("backlinks --history --rows", () => {
+  it("sends history and rows and renders both tables", async () => {
+    respondWith(200, {
+      domain: "demo.example",
+      snapshot: { domain: "demo.example", measured_on: "2026-08-27", referring_domains: 11, backlinks: 84, rank: 27, spam_score: 3 },
+      history: [{ month: "2026-07", backlinks: 86, referring_domains: 11, new: 2, lost: 1 }],
+      referring_domains: [{ domain: "ref.test", rank: 300, backlinks: 12, dofollow: 10, first_seen: "2026-01-04" }],
+      cost: 0.0796,
+    });
+    await run("backlinks", "--history", "--rows", "200");
+    expect(calls[0]?.body).toEqual({ history: true, rows: 200 });
+    expect(output).toContain("history\nmonth    backlinks  referring_domains  new  lost\n2026-07         86                 11    2     1");
+    expect(output).toContain("referring domains\ndomain    rank  backlinks  dofollow  first_seen\nref.test   300         12        10  2026-01-04");
+    expect(output.trimEnd().endsWith("cost $0.0796")).toBe(true);
+  });
+
+  it("estimate backlinks --history forwards dry_run", async () => {
+    respondWith(200, { estimate: { cost: 0.0796 } });
+    await run("estimate", "backlinks", "--history", "--rows", "200");
+    expect(calls[0]?.body).toEqual({ history: true, rows: 200, dry_run: true });
+  });
+});
+
+describe("keywords update", () => {
+  it("patches path, track and status", async () => {
+    respondWith(200, { keyword: { id: 3, keyword: "seo cli", set_name: "guarantee", status: "paused", track: "bofu", target_path: "/seo-cli", locked: false } });
+    await run("keywords", "update", "3", "--path", "/seo-cli", "--track", "bofu", "--status", "paused");
+    expect(calls[0]?.url).toBe("http://backend.test/api/v1/projects/demo/keywords/3");
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.body).toEqual({ target_path: "/seo-cli", track: "bofu", status: "paused" });
+    expect(output).toBe("id  keyword  set        status  track  path      locked\n 3  seo cli  guarantee  paused  bofu   /seo-cli  no\n");
+  });
+
+  it("refuses an empty update", async () => {
+    await expect(run("keywords", "update", "3")).rejects.toThrow(/--path, --track, --status/);
+    expect(calls).toHaveLength(0);
+  });
+});

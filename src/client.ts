@@ -71,6 +71,7 @@ export type KeywordInput = {
   locked?: boolean;
   volume?: number;
   kd?: number;
+  status?: string;
 };
 
 export type PromptInput = { text: string; set_name?: string; locked?: boolean };
@@ -192,8 +193,28 @@ export class SeoClient {
     return this.post(`/api/v1/projects/${encode(slug)}/floor`, body);
   }
 
-  backlinks(slug: string, body: { domain?: string; dry_run?: boolean }) {
+  backlinks(slug: string, body: { domain?: string; history?: boolean; rows?: number; months?: number; dry_run?: boolean }) {
     return this.post(`/api/v1/projects/${encode(slug)}/backlinks`, body);
+  }
+
+  domainOverview(slug: string, body: { domain?: string; limit?: number; force?: boolean; dry_run?: boolean }) {
+    return this.post(`/api/v1/projects/${encode(slug)}/domain_overview`, body);
+  }
+
+  llmMentions(slug: string, body: { brand?: string; competitors?: string[]; force?: boolean; dry_run?: boolean }) {
+    return this.post(`/api/v1/projects/${encode(slug)}/llm_mentions`, body);
+  }
+
+  createSiteAudit(slug: string, body: { lighthouse?: boolean; max_pages?: number; pages?: number; dry_run?: boolean }) {
+    return this.post(`/api/v1/projects/${encode(slug)}/site_audits`, body);
+  }
+
+  getSiteAudit(slug: string, id: string | number) {
+    return this.get(`/api/v1/projects/${encode(slug)}/site_audits/${encode(String(id))}`);
+  }
+
+  listSiteAudits(slug: string, query: { limit?: number | undefined } = {}) {
+    return this.get(`/api/v1/projects/${encode(slug)}/site_audits`, query);
   }
 
   gscImport(slug: string, body: { dimension: "query" | "page"; range_start: string; range_end: string; csv: string }) {

@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { registerAi } from "./commands/ai.js";
+import { registerAudit } from "./commands/audit.js";
 import { registerBacklinks } from "./commands/backlinks.js";
 import { registerContext } from "./commands/context.js";
+import { registerDomain } from "./commands/domain.js";
 import { registerEstimate } from "./commands/estimate.js";
 import { registerExperiments } from "./commands/experiments.js";
 import { registerFloor } from "./commands/floor.js";
@@ -10,6 +12,7 @@ import { registerKeywords } from "./commands/keywords.js";
 import { registerLog } from "./commands/log.js";
 import { registerLogin } from "./commands/login.js";
 import { registerMcp } from "./commands/mcp.js";
+import { registerMentions } from "./commands/mentions.js";
 import { registerProject } from "./commands/project.js";
 import { registerProjects } from "./commands/projects.js";
 import { registerPrompts } from "./commands/prompts.js";
@@ -48,6 +51,9 @@ export function buildProgram(): Command {
   registerAi(program);
   registerFloor(program);
   registerBacklinks(program);
+  registerDomain(program);
+  registerMentions(program);
+  registerAudit(program);
   registerGsc(program);
   registerShip(program);
   registerExperiments(program);
