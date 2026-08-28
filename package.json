@@ -1,9 +1,9 @@
 {
-  "name": "@recmend/seo-cli",
+  "name": "@truestandard/seo-cli",
   "version": "0.1.0",
-  "description": "CLI and stdio MCP proxy for the seo backend",
+  "description": "The command line and MCP server for Nightshift, the SEO operator that runs while you sleep.",
   "license": "MIT",
-  "author": "Arun Agrahri <agrahri.arun@gmail.com>",
+  "author": "TrueStandard Labs LLC",
   "type": "module",
   "bin": {
     "seo": "dist/index.js"
@@ -11,7 +11,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=20"
@@ -36,19 +37,27 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/recmend/seo-cli.git"
+    "url": "git+https://github.com/truestandard/seo-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/truestandard/seo-cli/issues"
   },
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://nightshift.so/docs",
+  "homepage": "https://nightshift.so",
   "keywords": [
     "seo",
     "mcp",
+    "model-context-protocol",
     "claude-code",
     "codex",
+    "cursor",
     "ai-agents",
     "rank-tracking",
-    "aeo"
+    "keyword-research",
+    "aeo",
+    "cli",
+    "typescript"
   ]
 }

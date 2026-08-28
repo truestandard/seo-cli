@@ -28,7 +28,7 @@ import { packageVersion } from "./version.js";
 
 export function buildProgram(): Command {
   const program = new Command("seo")
-    .description("CLI for the seo backend: keywords, ranks, AI visibility, floors, spend")
+    .description("Nightshift from the command line: keywords, ranks, AI answers, targets, spend")
     .version(packageVersion())
     .option("--json", "print the raw API response as JSON")
     .option("--project <slug>", "project slug (overrides `seo use` and SEO_PROJECT)")
