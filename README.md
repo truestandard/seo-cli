@@ -1,6 +1,6 @@
 # seo-cli
 
-The command line and MCP server for [TrueStandard Agency](https://truestandard.agency), the SEO operator that runs the loop for you: find the terms you can win, check the target, ship the page, track the rank and the AI answers every week.
+The command line and MCP server for TrueStandard Agency, the SEO operator that runs the loop for you: find the terms you can win, check the target, ship the page, track the rank and the AI answers every week.
 
 [![CI](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/go-%3E%3D1.25-00ADD8)](go.mod)
@@ -160,4 +160,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY
 
 ## License
 
-MIT. Built by [TrueStandard Labs](https://truestandard.ai). TrueStandard Agency lives at [truestandard.agency](https://truestandard.agency).
+MIT. Built by [TrueStandard Labs](https://truestandard.org), the studio behind [TrueStandard](https://truestandard.ai), [Gavel](https://usegavel.com) and [Precis](https://precis.health). The hosted TrueStandard Agency is on its way; email us for a key meanwhile.
