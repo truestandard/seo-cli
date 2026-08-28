@@ -1,0 +1,23 @@
+name: Feature request
+description: A command or flag you want
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The task, not the solution. What would you run and what should come back.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed command
+      description: A sketch of the command line or MCP tool call
+      render: shell
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This needs a new backend endpoint, not just a CLI change

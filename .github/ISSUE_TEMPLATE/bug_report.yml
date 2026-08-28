@@ -1,0 +1,45 @@
+name: Bug report
+description: A command did something other than what the README says
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `seo --version` and `node --version`
+      placeholder: seo 0.1.0, node v20.11.0
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command you ran. Strip your token.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Paste stderr and, if useful, the `--json` output.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: host
+    attributes:
+      label: MCP host
+      description: Fill in if the bug shows up through `seo mcp`
+      options:
+        - Not MCP
+        - Claude Code
+        - Codex
+        - Cursor
+        - Other
