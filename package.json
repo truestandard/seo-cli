@@ -33,5 +33,22 @@
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/recmend/seo-cli.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://nightshift.so/docs",
+  "keywords": [
+    "seo",
+    "mcp",
+    "claude-code",
+    "codex",
+    "ai-agents",
+    "rank-tracking",
+    "aeo"
+  ]
 }
