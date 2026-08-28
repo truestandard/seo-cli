@@ -19,7 +19,7 @@ curl -fsSL https://github.com/truestandard/seo-cli/releases/latest/download/seo_
 Or from source with Go 1.22 or newer:
 
 ```
-go install github.com/truestandard/seo-cli@latest
+go install github.com/truestandard/seo-cli/cmd/seo@latest
 ```
 
 ## Sixty seconds
@@ -152,7 +152,7 @@ The CLI holds no logic of its own. The backend runs the loop for every project. 
 ## Develop
 
 ```
-go build -o seo . && ./seo version
+go build -o seo ./cmd/seo && ./seo version
 gofmt -l . && go vet ./... && go test ./...
 ```
 

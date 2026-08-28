@@ -3,7 +3,7 @@ version: 2
 project_name: seo
 
 builds:
-  - main: .
+  - main: ./cmd/seo
     binary: seo
     env:
       - CGO_ENABLED=0
@@ -11,9 +11,9 @@ builds:
     goarch: [amd64, arm64]
     ldflags:
       - -s -w
-      - -X github.com/truestandard/seo-cli/cmd.version={{ .Version }}
-      - -X github.com/truestandard/seo-cli/cmd.commit={{ .ShortCommit }}
-      - -X github.com/truestandard/seo-cli/cmd.date={{ .Date }}
+      - -X github.com/truestandard/seo-cli/internal/cli.version={{ .Version }}
+      - -X github.com/truestandard/seo-cli/internal/cli.commit={{ .ShortCommit }}
+      - -X github.com/truestandard/seo-cli/internal/cli.date={{ .Date }}
 
 archives:
   - formats: [tar.gz]

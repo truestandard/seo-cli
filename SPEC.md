@@ -22,12 +22,12 @@ Coding agents (Claude Code, Codex, Cursor, cron) and the people who run them dri
 | Default API base | `https://truestandard.agency` |
 | Primary verbs | `ranks`, `scoreboard`, `estimate <paid command>` |
 
-The CLI is the `cli/` directory of the private Rails repo `recmend/seo`. The public repo `truestandard/seo-cli` is a `git subtree` mirror of that directory (`bin/cli_publish`); the module path is the public repo root so `go install github.com/truestandard/seo-cli@latest` works. Extraction to its own source-of-truth repo is deferred.
+The CLI is the `cli/` directory of the private Rails repo `recmend/seo`. The public repo `truestandard/seo-cli` is a `git subtree` mirror of that directory (`bin/cli_publish`); the module path is the public repo root so `go install github.com/truestandard/seo-cli/cmd/seo@latest` works. Extraction to its own source-of-truth repo is deferred.
 
 ```
 cli/
-  main.go
-  cmd/            root, auth, projects, context, keywords, paid, ai, site, estimate, mcp, skills, version
+  cmd/seo/main.go
+  internal/cli    root, auth, projects, context, keywords, paid, ai, site, estimate, mcp, skills, version
   internal/api    client, errors
   internal/auth   login with a key, logout
   internal/config precedence, credentials
@@ -124,7 +124,7 @@ Credentials 0600 in a 0700 dir. The token appears in no log line and no error. `
 
 ## 14. Acceptance criteria
 
-- `go install github.com/truestandard/seo-cli@latest` yields a working `seo`.
+- `go install github.com/truestandard/seo-cli/cmd/seo@latest` yields a working `seo`.
 - `seo auth login --token` writes a 0600 credential and installs the skill unless `--no-skills`.
 - `SEO_API_KEY` alone authenticates with no file present.
 - `seo whoami`, `projects`, `ranks`, `scoreboard` return the API JSON; `--pretty` renders tables.

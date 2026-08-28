@@ -9,7 +9,7 @@ Go 1.22 or newer.
 ```
 git clone git@github.com:truestandard/seo-cli.git
 cd seo-cli
-go build -o seo .
+go build -o seo ./cmd/seo
 ./seo version
 ```
 
@@ -36,8 +36,8 @@ CI runs the same three steps and a build.
 ## Layout
 
 ```
-main.go
-cmd/            one file per command group; root.go owns the tree
+cmd/seo/main.go
+internal/cli    one file per command group; root.go owns the tree
 internal/api    HTTP client and the error envelope
 internal/auth   login with a key, logout
 internal/config flag > env > file > default
