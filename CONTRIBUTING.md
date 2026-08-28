@@ -4,7 +4,7 @@ Thanks for looking. This repo is the client. The backend it talks to is private,
 
 ## Setup
 
-Go 1.22 or newer.
+Go 1.25 or newer.
 
 ```
 git clone git@github.com:truestandard/seo-cli.git

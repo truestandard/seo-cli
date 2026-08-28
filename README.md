@@ -3,7 +3,7 @@
 The command line and MCP server for [TrueStandard Agency](https://truestandard.agency), the SEO operator that runs the loop for you: find the terms you can win, check the target, ship the page, track the rank and the AI answers every week.
 
 [![CI](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/go-%3E%3D1.22-00ADD8)](go.mod)
+[![Go](https://img.shields.io/badge/go-%3E%3D1.25-00ADD8)](go.mod)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 One static binary. Every command maps to one API call and prints JSON. Add `--pretty` for tables. `seo mcp` turns the same key into an MCP server for Claude Code, Codex and Cursor.
@@ -16,7 +16,7 @@ Release archives for macOS and Linux:
 curl -fsSL https://github.com/truestandard/seo-cli/releases/latest/download/seo_$(uname -s)_$(uname -m).tar.gz | tar -xz -C /usr/local/bin seo
 ```
 
-Or from source with Go 1.22 or newer:
+Or from source with Go 1.25 or newer:
 
 ```
 go install github.com/truestandard/seo-cli/cmd/seo@latest
