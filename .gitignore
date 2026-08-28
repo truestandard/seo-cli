@@ -1,4 +1,4 @@
-node_modules/
-dist/
-*.tgz
+/seo
+/dist/
+*.test
 .DS_Store

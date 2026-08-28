@@ -1,50 +1,40 @@
 # seo-cli
 
-The command line and MCP server for Nightshift, the SEO operator that runs while you sleep. One key, every SEO number your agent needs.
+The command line and MCP server for [TrueStandard Agency](https://truestandard.agency), the SEO operator that runs the loop for you: find the terms you can win, check the target, ship the page, track the rank and the AI answers every week.
 
-[![npm](https://img.shields.io/npm/v/@truestandard/seo-cli)](https://www.npmjs.com/package/@truestandard/seo-cli)
 [![CI](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/truestandard/seo-cli/actions/workflows/ci.yml)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](.nvmrc)
+[![Go](https://img.shields.io/badge/go-%3E%3D1.22-00ADD8)](go.mod)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`seo` is a thin client. Every command maps to one Nightshift API call and prints a table. Add `--json` for the raw response. `seo mcp` turns the same key into an MCP server for Claude Code, Codex and Cursor.
+One static binary. Every command maps to one API call and prints JSON. Add `--pretty` for tables. `seo mcp` turns the same key into an MCP server for Claude Code, Codex and Cursor.
 
-## Quickstart
+## Install
 
-Sixty seconds from install to your first rank read.
-
-```
-npm i -g @truestandard/seo-cli
-```
+Release archives for macOS and Linux:
 
 ```
-seo login
+curl -fsSL https://github.com/truestandard/seo-cli/releases/latest/download/seo_$(uname -s)_$(uname -m).tar.gz | tar -xz -C /usr/local/bin seo
 ```
 
-Asks for the Nightshift URL and your key, checks them, and saves both to `~/.config/seo/config.json`.
+Or from source with Go 1.22 or newer:
 
 ```
+go install github.com/truestandard/seo-cli@latest
+```
+
+## Sixty seconds
+
+```
+seo auth login --token seo_…
 seo projects
 seo use my-site
-```
-
-Lists your projects and picks one as the default.
-
-```
-seo ranks --since 7d
-```
-
-Prints each tracked keyword with position, previous position, change and URL. One summary line follows: top 10, top 20, top 100, unranked and average position.
-
-```
+seo ranks --since 7d --pretty
 seo mcp
 ```
 
-Runs the same key as a stdio MCP server. Your agent gets every tool Nightshift serves.
+`auth login` checks the key against the backend and saves it to `~/.seo/credentials.json` with owner-only permissions. The key arrives by email when you [sign up](https://truestandard.agency/signup).
 
 ## Add it to your agent
-
-The MCP server fetches the tool list from Nightshift at startup and proxies each call. It reads the same config as the CLI and fills in your default project when a tool wants one.
 
 Claude Code:
 
@@ -63,174 +53,111 @@ args = ["mcp"]
 Cursor (`.cursor/mcp.json`):
 
 ```json
-{
-  "mcpServers": {
-    "seo": {
-      "command": "seo",
-      "args": ["mcp"]
-    }
-  }
-}
+{ "mcpServers": { "seo": { "command": "seo", "args": ["mcp"] } } }
 ```
 
-Set `SEO_TOKEN` and `SEO_BASE_URL` in the agent's environment if you want nothing on disk.
+The MCP server fetches the tool list from the backend at startup and proxies each call. It fills in your default project when a tool asks for one.
+
+`seo auth login` also writes a skill into the project you run it from: `.claude/skills/seo/SKILL.md` when a `.claude/` folder exists, a managed block in `AGENTS.md` when Codex is set up. The skill teaches the agent the commands, the JSON contract and the exit codes. Skip it with `--no-skills`; refresh it with `seo skills doctor --fix`.
 
 ## Commands
 
-Commands marked paid call a data provider through Nightshift. Add `--dry-run` to see the estimate first.
+```
+seo auth login --token seo_… [--api-url <url>]     check the key and save it
+seo auth status | logout
+seo whoami
 
-### Project
+seo projects
+seo project [show [slug] | create <slug> --name --domain]
+seo use <slug>
+seo context [get | set <key> [text] | add-competitor <domain> | add-page <path> | log <kind> <summary>]
+seo keywords [list | add <kw...> | update <id> | remove <id...>]
+seo research <seeds...>                              paid
+seo serp <keyword> [--depth]                         paid
+seo track [run --live|--scheduled | status <id>]     paid
+seo ranks [--since 7d] [--set guarantee]
+seo prompts [list | add <text...>]
+seo ai [run | results [--since 30d] | status <id>]   paid (run)
+seo floor <keywords...>                              paid
+seo backlinks [domain] [--history --months --rows]   paid
+seo domain [domain] [--limit --force]                paid, cached 12h
+seo mentions [--brand --competitor... --force]       paid, cached 24h
+seo audit [run [--lighthouse] | show <id> | list]    paid with --lighthouse
+seo gsc [import <csv> --dimension --start --end | striking]
+seo ship <url> [--keyword --track --note]
+seo experiments [list | add <change...> | outcome <id> <text...>]
+seo log [--kind --days]
+seo scoreboard
+seo spend [--since 30d]
+seo estimate <paid command...>                       price it, spend nothing
+seo mcp
+seo skills [install | list | doctor [--fix] | uninstall]
+seo version
+```
 
-| Command | Does |
-|---|---|
-| `seo login [--token] [--base-url]` | check the URL and key, then save them |
-| `seo projects` | list projects |
-| `seo use <slug>` | set the default project |
-| `seo project show [slug]` | show a project |
-| `seo project create <slug>` | create a project |
-| `seo context get` | print the project memory |
-| `seo context set <key> [text]` | set a memory section (reads stdin when text is omitted) |
-| `seo context add-competitor <domain>` | add a competitor |
-| `seo context add-page <path>` | add a key page |
-| `seo context log <kind> <summary>` | append a research log entry |
+Global flags:
 
-### Research
+| Flag | Env | Meaning |
+|------|-----|---------|
+| `--project <slug>` | `SEO_PROJECT` | project for this call |
+| `--api-url <url>` | `SEO_API_URL` | backend, default `https://truestandard.agency` |
+| `--token <key>` | `SEO_API_KEY` | key for this call, wins over the saved one |
+| `--dry-run` | | paid commands print the estimate and spend nothing |
+| `--pretty` | | tables instead of JSON |
+| `--json` | | JSON, the default |
+| `--quiet` | | no notices on stderr |
 
-| Command | Does | Paid |
-|---|---|---|
-| `seo research <seeds...> --limit --max-kd [--keywords]` | keyword ideas from seed terms with volume and difficulty | yes |
-| `seo serp <keyword> --depth` | page one for a keyword, read live | yes |
-| `seo floor <keywords...>` | win check: the weakest site on page one against your own, measured in linking sites | yes |
-| `seo domain [domain] --limit --force` | traffic, keyword count, top keywords and top pages for any domain | yes, cached 12h |
-| `seo backlinks [domain] --history --months --rows` | backlinks and linking sites, with monthly history and the top linking sites | yes |
+Precedence is flag, then env, then the saved file, then the default.
 
-### Tracking
+## Output
 
-| Command | Does | Paid |
-|---|---|---|
-| `seo keywords list [--set]` | the keywords you track | |
-| `seo keywords add <kw...> --track --path --set --locked` | add keywords with a target path | |
-| `seo keywords update <id> --path --track --status` | change a keyword | |
-| `seo keywords remove <id...>` | remove keywords | |
-| `seo track run --live or --scheduled [--set]` | start a rank check | yes |
-| `seo track status <id>` | how a run is going | |
-| `seo ranks --since 7d [--set]` | position, previous, change and URL per keyword, plus a summary line | |
-| `seo gsc import <csv> --dimension query or page --start --end` | import a Search Console export | |
-| `seo gsc striking` | page-two keywords (position 8 to 20) by impressions | |
+stdout is the contract. JSON on success, JSON on failure:
 
-### AI answers
+```
+{ "error": "unauthorized", "message": "unauthorized" }
+```
 
-| Command | Does | Paid |
-|---|---|---|
-| `seo prompts list [--set]` | the prompts you ask the engines | |
-| `seo prompts add <text...> --set --locked [--file]` | add prompts | |
-| `seo ai run [--set] [--runs]` | ask GPT, Claude and Gemini every prompt and score each answer | yes |
-| `seo ai results --since 30d [--set]` | named, cited and change since the last run, per engine | |
-| `seo ai status <id>` | how a scan is going | |
-| `seo mentions [--brand] [--competitor <name>]... [--force]` | how often ChatGPT and Google AI name your brand and each rival | yes, cached 24h |
+Notices for people go to stderr. Parse stdout, never stderr, and never pass `--pretty` when you parse.
 
-### Site
+| Exit | Meaning |
+|------|---------|
+| 0 | ok |
+| 1 | error, the JSON says which |
+| 2 | bad flags or arguments |
+| 11 | not authenticated |
+| 14 | the backend or a provider failed |
 
-| Command | Does | Paid |
-|---|---|---|
-| `seo audit run [--lighthouse --pages 20] [--max-pages 500]` | crawl the sitemap, key pages and retired paths | Lighthouse only |
-| `seo audit show <id>` | summary, issues with severity and fix, Lighthouse scores | |
-| `seo audit list` | past audits, newest first | |
-| `seo ship <url> --keyword --track --note` | log a shipped page and confirm it answers 200 with an h1 | |
-| `seo experiments list` | the change log | |
-| `seo experiments add <change> --page --hypothesis --keyword` | log a change and why | |
-| `seo experiments outcome <id> <text>` | log what happened | |
-| `seo log --kind --days` | research log entries | |
+## Money
 
-### Spend
+Commands marked paid buy data from a provider through the backend. Run `seo estimate <command>` or add `--dry-run` first:
 
-| Command | Does |
-|---|---|
-| `seo scoreboard` | targets, rank summary, AI answers, ships and 30-day spend |
-| `seo spend --since 30d` | spend by provider |
-| `seo estimate <command> [args...]` | run a paid command with dry_run and print only the estimate |
+```
+$ seo estimate track run --live --pretty
+estimate $0.84 (keyword_count=42 mode=live), nothing spent
+```
 
-### Global options
+Every paid call is logged. `seo spend --since 7d` shows it. Locked keyword and prompt sets are measurement contracts: the CLI never edits them, it adds new sets.
 
-| Option | Effect |
-|---|---|
-| `--json` | print the raw API response |
-| `--project <slug>` | override the default project |
-| `--dry-run` | paid commands print the estimate and spend nothing |
-| `--base-url <url>` | override the Nightshift URL |
-
-Exit code is 1 on any API error. The message and code go to stderr.
-
-## How it works
+## How it fits
 
 ```mermaid
 flowchart LR
-  A["Your agent<br/>Claude Code, Codex, Cursor, cron"] -->|seo ranks, tools/call| B["seo CLI and MCP server"]
-  B -->|one key, /api/v1 and /mcp| C["Nightshift API"]
-  C --> D["Weekly loop<br/>find, win check, ship, track, refresh"]
-  D -->|scoreboard, Friday note| A
+  A["Claude Code / Codex / Cursor / cron"] --> B["seo CLI or seo mcp"]
+  B -->|one key, /api/v1 and /mcp| C["TrueStandard Agency"]
+  C --> D["search data, AI answers, backlinks, Search Console"]
 ```
 
-The CLI holds no logic of its own. Nightshift runs the loop for every project. The CLI and the MCP server are two doors into the same numbers.
+The CLI holds no logic of its own. The backend runs the loop for every project. The CLI and the MCP server are two doors into the same numbers.
 
-## Costs and estimates
-
-Paid commands buy data from providers through Nightshift. Every paid command takes `--dry-run`. It prints the estimate and spends nothing:
+## Develop
 
 ```
-seo floor "seo cli" "rank tracker api" --dry-run
-seo estimate track run --live
+go build -o seo . && ./seo version
+gofmt -l . && go vet ./... && go test ./...
 ```
 
-`seo spend --since 30d` shows what you spent and where. `seo domain` and `seo mentions` cache results (12 hours and 24 hours). A cached read costs nothing. Add `--force` to buy fresh data.
-
-## Get a key
-
-Sign up at [nightshift.so/signup](https://nightshift.so/signup). One key covers every project on your account.
-
-Self-hosting the backend is not public yet. The CLI talks to Nightshift only.
-
-## Configuration
-
-`seo login` writes `~/.config/seo/config.json`:
-
-```json
-{ "baseUrl": "https://…", "token": "seo_…", "project": "my-site" }
-```
-
-| Variable | Overrides |
-|---|---|
-| `SEO_BASE_URL` | `baseUrl` |
-| `SEO_TOKEN` | `token` |
-| `SEO_PROJECT` | `project` |
-| `SEO_CONFIG_PATH` | the config file path |
-
-Non-interactive login for CI: `seo login --token seo_… --base-url https://…`.
-
-## Development
-
-```
-git clone git@github.com:truestandard/seo-cli.git
-cd seo-cli
-npm install
-npm test
-npm run dev -- ranks --since 7d
-```
-
-`npm run typecheck` and `npm run build` complete the set. Three runtime dependencies: `commander`, `@modelcontextprotocol/sdk` and `zod`. The HTTP client is global `fetch`.
-
-## Contributing
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup and the pull request checklist.
-
-## Security
-
-Read [SECURITY.md](SECURITY.md). Report vulnerabilities to security@truestandard.ai.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
 
 ## License
 
-[MIT](LICENSE)
-
----
-
-Built by [TrueStandard Labs](https://truestandard.ai). Nightshift lives at [nightshift.so](https://nightshift.so).
+MIT. Built by [TrueStandard Labs](https://truestandard.ai). TrueStandard Agency lives at [truestandard.agency](https://truestandard.agency).

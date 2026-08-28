@@ -1,0 +1,27 @@
+version: 2
+
+project_name: seo
+
+builds:
+  - main: .
+    binary: seo
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X github.com/truestandard/seo-cli/cmd.version={{ .Version }}
+      - -X github.com/truestandard/seo-cli/cmd.commit={{ .ShortCommit }}
+      - -X github.com/truestandard/seo-cli/cmd.date={{ .Date }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else if and (eq .Arch "arm64") (eq .Os "linux") }}aarch64{{ else }}{{ .Arch }}{{ end }}'
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc

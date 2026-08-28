@@ -1,69 +1,52 @@
 # Contributing
 
-Thanks for helping. This file covers setup, tests, commits, and what a pull request needs.
+Thanks for looking. This repo is the client. The backend it talks to is private, so a contribution here changes how a command reads, prints or exits, not what the API returns.
 
 ## Setup
+
+Go 1.22 or newer.
 
 ```
 git clone git@github.com:truestandard/seo-cli.git
 cd seo-cli
-npm install
-npm test
+go build -o seo .
+./seo version
 ```
 
-Node 20 or newer. `.nvmrc` pins 20.
+Point it at a backend with `--api-url` or `SEO_API_URL`. The key comes from `seo auth login --token` or `SEO_API_KEY`.
 
-Run a command from source without building:
-
-```
-npm run dev -- ranks --since 7d
-```
-
-Point it at a backend with `SEO_BASE_URL` and `SEO_TOKEN`, or run `seo login` once.
-
-## Tests
+## Before you open a pull request
 
 ```
-npm test              vitest
-npm run typecheck     tsc --noEmit
-npm run build         tsc to dist/
+gofmt -l .
+go vet ./...
+go test ./...
 ```
 
-Tests inject a fake `fetch` through `setFetch` in `src/client.ts`. No test talks to a network. A new command gets a test in `test/commands.test.ts` that asserts the request it sends and the table it prints.
+CI runs the same three steps and a build.
 
-## Code
+## Rules that keep the CLI usable by agents
 
-- One file per command under `src/commands/`. Each maps to one API endpoint in `src/client.ts`.
-- Code reads without comments. Pick a name that says what the thing does.
-- Runtime dependencies stay at three: `commander`, `@modelcontextprotocol/sdk`, `zod`. Open an issue before adding one.
-- The HTTP client is global `fetch`.
-- Strict TypeScript. `npm run typecheck` runs with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` on.
+- stdout is JSON. Success and errors both. `--pretty` is the only thing that changes it.
+- Notices for people go to stderr.
+- Exit codes are a contract. Do not add or move one without a note in the README table and in `skill/body.md`.
+- A paid command must accept `--dry-run` and print the estimate without spending.
+- No code comments. Name things so the code reads on its own.
 
-## Commits
-
-Conventional commits, one change per commit:
+## Layout
 
 ```
-feat: add seo audit list
-fix: ranks prints unranked keywords
-docs: cursor mcp block
-chore: bump vitest
+main.go
+cmd/            one file per command group; root.go owns the tree
+internal/api    HTTP client and the error envelope
+internal/auth   login with a key, logout
+internal/config flag > env > file > default
+internal/output JSON to stdout, exit codes
+internal/skills detect agents, install the skill
+internal/table  the --pretty renderer
+skill/          the embedded agent skill
 ```
-
-## Pull requests
-
-Before you open one:
-
-- [ ] `npm test`, `npm run typecheck`, and `npm run build` pass
-- [ ] A new or changed command has a test
-- [ ] README lists the command with its flags
-- [ ] CHANGELOG has an entry under Unreleased
-- [ ] No comments in code
-
-CI runs the same three scripts on Node 20 and 22.
 
 ## Releases
 
-Maintainers cut a release by bumping `version` in `package.json`, moving the Unreleased entries in CHANGELOG under the new version, and publishing a GitHub release with tag `v<version>`. The release workflow then runs `npm publish --provenance --access public`.
-
-The workflow needs an `NPM_TOKEN` repository secret with publish rights on the `@truestandard` scope. Without it the publish step fails.
+Maintainers tag `vX.Y.Z` on `main`. GoReleaser builds darwin and linux archives for amd64 and arm64 and attaches them to the GitHub release with a checksum file.
