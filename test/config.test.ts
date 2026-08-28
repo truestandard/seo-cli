@@ -22,15 +22,15 @@ describe("config", () => {
   });
 
   it("saves and reloads baseUrl, token, and project with owner-only permissions", () => {
-    saveStoredConfig({ baseUrl: "http://localhost:3011", token: "seo_abc", project: "demo" }, path);
-    expect(loadStoredConfig(path)).toEqual({ baseUrl: "http://localhost:3011", token: "seo_abc", project: "demo" });
+    saveStoredConfig({ baseUrl: "http://localhost:3012", token: "seo_abc", project: "demo" }, path);
+    expect(loadStoredConfig(path)).toEqual({ baseUrl: "http://localhost:3012", token: "seo_abc", project: "demo" });
     expect(statSync(path).mode & 0o777).toBe(0o600);
-    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ baseUrl: "http://localhost:3011", token: "seo_abc", project: "demo" });
+    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ baseUrl: "http://localhost:3012", token: "seo_abc", project: "demo" });
   });
 
   it("merges patches without dropping existing keys", () => {
-    saveStoredConfig({ baseUrl: "http://localhost:3011", token: "seo_abc" }, path);
-    expect(updateStoredConfig({ project: "demo" }, path)).toEqual({ baseUrl: "http://localhost:3011", token: "seo_abc", project: "demo" });
+    saveStoredConfig({ baseUrl: "http://localhost:3012", token: "seo_abc" }, path);
+    expect(updateStoredConfig({ project: "demo" }, path)).toEqual({ baseUrl: "http://localhost:3012", token: "seo_abc", project: "demo" });
   });
 
   it("ignores unknown and non-string fields", () => {

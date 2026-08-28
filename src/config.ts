@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-export const DEFAULT_BASE_URL = "http://localhost:3011";
+export const DEFAULT_BASE_URL = "http://localhost:3012";
 
 export type StoredConfig = {
   baseUrl?: string;
