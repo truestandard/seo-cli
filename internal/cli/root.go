@@ -56,9 +56,9 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(
 		authCmd(), loginCmd(), whoamiCmd(),
 		projectsCmd(), projectCmd(), useCmd(), contextCmd(),
-		keywordsCmd(), researchCmd(), serpCmd(), trackCmd(), ranksCmd(),
+		keywordsCmd(), researchCmd(), triageCmd(), serpCmd(), trackCmd(), ranksCmd(),
 		promptsCmd(), aiCmd(), floorCmd(), backlinksCmd(), domainCmd(), mentionsCmd(), auditCmd(),
-		gscCmd(), shipCmd(), experimentsCmd(), logCmd(), scoreboardCmd(), spendCmd(),
+		gscCmd(), shipCmd(), linksCmd(), fitCmd(), experimentsCmd(), logCmd(), scoreboardCmd(), spendCmd(),
 		estimateCmd(), mcpCmd(), skillsCmd(), versionCmd(),
 	)
 	return root

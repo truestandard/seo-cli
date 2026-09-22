@@ -52,10 +52,10 @@ cli/
 ```
 Auth      auth login --token | auth status | auth logout | whoami | login (hidden alias)
 Project   projects | project show|create | use | context get|set|add-competitor|add-page|log
-Keywords  keywords list|add|update|remove | research* | serp* | floor*
+Keywords  keywords list|add|update|remove | research* | triage* | serp* | floor*
 Ranks     track run*|status | ranks
 AI        prompts list|add | ai run*|results|status | mentions*
-Site      backlinks* | domain* | audit run*|show|list | gsc import|striking | ship | experiments list|add|outcome
+Site      backlinks* | domain* | audit run*|show|list | gsc import|striking | links* | fit* | ship | experiments list|add|outcome
 Read      log | scoreboard | spend
 Meta      estimate <paid> | mcp | skills install|list|doctor|uninstall | version
 ```

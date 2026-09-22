@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -206,9 +207,14 @@ func renderVisibility(data any) string {
 		if rows := table.AsRows(report["domains_top"]); len(rows) > 0 {
 			lines = append(lines, table.Table(rows, nil, nil))
 		}
-		if rivals := table.AsObject(report["rival_share"]); rivals != nil {
-			lines = append(lines, "rivals "+table.SummaryOf(rivals))
+		if rivals := table.AsObject(report["competitor_share_of_voice"]); len(rivals) > 0 {
+			label := "rivals named"
+			if report["competitor_share_of_voice_method"] == "jev_suggested" {
+				label = "rivals recommended"
+			}
+			lines = append(lines, label+" "+table.SummaryOf(rivals))
 		}
+		lines = append(lines, judgmentLines(table.AsObject(report["judgment"]))...)
 	}
 	if deltas := table.AsObject(root["deltas"]); deltas != nil {
 		if totals := table.AsObject(deltas["totals"]); totals != nil {
@@ -224,6 +230,26 @@ func renderVisibility(data any) string {
 		return "no AI scan in this window"
 	}
 	return joinLines(lines, "\n")
+}
+
+func judgmentLines(judgment table.Row) []string {
+	if judgment == nil {
+		return nil
+	}
+	var lines []string
+	if stance := table.AsObject(judgment["stance"]); len(stance) > 0 {
+		lines = append(lines, "stance "+table.SummaryOf(stance))
+	}
+	if cited := table.AsObject(judgment["rival_cited"]); len(cited) > 0 {
+		lines = append(lines, "rivals cited as a source "+table.SummaryOf(cited))
+	}
+	if unjudged, ok := judgment["cells_unjudged"].(float64); ok && unjudged > 0 {
+		lines = append(lines, fmt.Sprintf("unjudged answers %d (regex scoring only)", int(unjudged)))
+	}
+	if rows := table.AsRows(judgment["review"]); len(rows) > 0 {
+		lines = append(lines, "review", table.Table(rows, []string{"prompt", "engine", "subject", "verdict", "confidence"}, nil))
+	}
+	return lines
 }
 
 func joinLines(lines []string, separator string) string {

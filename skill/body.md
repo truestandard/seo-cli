@@ -19,7 +19,8 @@ seo project show [slug] | create <slug> --name --domain [--repo-path --location-
 seo use <slug>                                set the default project
 seo context [get] | set <key> [text] [--file] | add-competitor <domain> | add-page <path> | log <kind> <summary>
 seo keywords [list --set] | add <kw...> [--track --path --set --locked --volume --kd] | update <id> [--path --track --status] | remove <id...>
-seo research <seeds...> [--limit --max-kd --keywords]            paid
+seo research <seeds...> [--limit --max-kd --keywords]            paid, triages what it buys
+seo triage [keywords...] [--entry <research log id>]              paid, cents: who searches, one page per intent
 seo serp <keyword> [--depth]                                     paid
 seo track [run --live|--scheduled --set] | status <id>           paid
 seo ranks [--since 7d] [--set guarantee]
@@ -31,7 +32,9 @@ seo domain [domain] [--limit --force]                            paid, cached 12
 seo mentions [--brand --competitor ... --force]                  paid, cached 24h
 seo audit [run --lighthouse --pages --max-pages] | show <id> | list [--limit]   paid with --lighthouse
 seo gsc import <csv> --dimension query|page --start --end | striking
-seo ship <url> [--keyword --track --note]
+seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pages that should link here
+seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
+seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now
 seo experiments [list] | add <change...> [--page --hypothesis --keyword --shipped-on] | outcome <id> <text...>
 seo log [--kind --days]
 seo scoreboard

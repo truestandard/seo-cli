@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -39,6 +41,7 @@ func researchCmd() *cobra.Command {
 					return "no keywords returned"
 				}
 				lines := []string{table.Table(rows, []string{"keyword", "volume", "kd", "cpc", "intent", "yoy"}, nil)}
+				lines = append(lines, triageLines(table.AsObject(table.AsObject(data)["triage"]))...)
 				cost := table.Pick(data, "spend")["cost"]
 				if cost == nil {
 					cost = table.AsObject(data)["cost"]
@@ -55,6 +58,83 @@ func researchCmd() *cobra.Command {
 	c.Flags().Int("max-kd", 0, "max keyword difficulty (default 30)")
 	c.Flags().Bool("keywords", false, "treat the arguments as exact keywords for an overview instead of seeds")
 	return c
+}
+
+func triageCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "triage [keywords...]",
+		Short: "screen keywords: who is searching, and which ones one page answers (paid, cents)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			fields := map[string]any{"research_log_entry_id": optInt(cmd, "entry")}
+			if len(args) > 0 {
+				fields["keywords"] = args
+			}
+			if fields["research_log_entry_id"] == nil && len(args) == 0 {
+				return usageError("seo triage <keywords...> or seo triage --entry <research log id>")
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/keyword_triage"), body(fields))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				return joinLines(triageLines(table.AsObject(data)), "\n")
+			})
+			return nil
+		},
+	}
+	c.Flags().Int("entry", 0, "research log entry to triage instead of keywords")
+	return c
+}
+
+func triageLines(triage table.Row) []string {
+	if triage == nil {
+		return nil
+	}
+	if triage["status"] != "triaged" {
+		return []string{fmt.Sprintf("triage: %v", triage["status"])}
+	}
+	lines := []string{"triage " + table.SummaryOf(table.AsObject(triage["counts"]))}
+	if warnings, ok := triage["warnings"].([]any); ok {
+		for _, warning := range warnings {
+			lines = append(lines, fmt.Sprintf("warning: %v", warning))
+		}
+	}
+	if groups := table.AsRows(triage["groups"]); len(groups) > 0 {
+		for _, group := range groups {
+			if members, ok := group["keywords"].([]any); ok {
+				parts := make([]string, len(members))
+				for i, member := range members {
+					parts[i] = fmt.Sprint(member)
+				}
+				group["keywords"] = strings.Join(parts, ", ")
+			}
+		}
+		lines = append(lines, "one page each:", table.Table(groups, []string{"head", "volume", "keywords"}, nil))
+	}
+	var dropped []table.Row
+	for _, row := range table.AsRows(triage["keywords"]) {
+		if row["keep"] == false && row["relevance"] != "unclear" {
+			dropped = append(dropped, row)
+		}
+	}
+	if len(dropped) > 0 {
+		lines = append(lines, "screened out:", table.Table(dropped, []string{"keyword", "relevance", "confidence"}, nil))
+	}
+	if review := table.AsObject(triage["review"]); review != nil {
+		unclear, _ := review["relevance"].([]any)
+		pairs, _ := review["pairs"].([]any)
+		if len(unclear)+len(pairs) > 0 {
+			lines = append(lines, fmt.Sprintf("review: %d unclear keywords, %d maybe-same-page pairs (--json for the list)", len(unclear), len(pairs)))
+		}
+	}
+	return lines
 }
 
 func serpCmd() *cobra.Command {

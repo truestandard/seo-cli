@@ -72,7 +72,8 @@ seo project [show [slug] | create <slug> --name --domain]
 seo use <slug>
 seo context [get | set <key> [text] | add-competitor <domain> | add-page <path> | log <kind> <summary>]
 seo keywords [list | add <kw...> | update <id> | remove <id...>]
-seo research <seeds...>                              paid
+seo research <seeds...>                              paid, triages what it buys
+seo triage [keywords... | --entry <id>]              paid, cents
 seo serp <keyword> [--depth]                         paid
 seo track [run --live|--scheduled | status <id>]     paid
 seo ranks [--since 7d] [--set guarantee]
@@ -84,6 +85,8 @@ seo domain [domain] [--limit --force]                paid, cached 12h
 seo mentions [--brand --competitor... --force]       paid, cached 24h
 seo audit [run [--lighthouse] | show <id> | list]    paid with --lighthouse
 seo gsc [import <csv> --dimension --start --end | striking]
+seo links [url] [--title --h1 --lead --keyword]      paid, cents
+seo fit [--set]                                      paid, cents
 seo ship <url> [--keyword --track --note]
 seo experiments [list | add <change...> | outcome <id> <text...>]
 seo log [--kind --days]

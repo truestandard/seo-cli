@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -238,10 +239,11 @@ func shipCmd() *cobra.Command {
 				if keyword == nil {
 					keyword = optString(cmd, "keyword")
 				}
-				return table.SummaryLine([]table.Pair{
+				summary := table.SummaryLine([]table.Pair{
 					{Key: "url", Value: url}, {Key: "verified", Value: event["verified"]}, {Key: "http_status", Value: event["http_status"]},
 					{Key: "h1", Value: event["h1"]}, {Key: "keyword", Value: keyword},
 				})
+				return joinLines(append([]string{summary}, linkSourceLines(table.AsObject(event["link_sources"]), []string{"path", "title", "level", "links_now"})...), "\n")
 			})
 			return nil
 		},
@@ -250,6 +252,115 @@ func shipCmd() *cobra.Command {
 	c.Flags().String("track", "", "track label")
 	c.Flags().String("note", "", "free-text note")
 	return c
+}
+
+func linksCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "links [url]",
+		Short: "rank audited pages as internal-link sources for a live url or a draft (paid, cents)",
+		Args:  maxArgs(1, "seo links [url] [--title --h1 --lead --keyword --limit]"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			fields := map[string]any{
+				"title": optString(cmd, "title"), "h1": optString(cmd, "h1"), "lead": optString(cmd, "lead"),
+				"keyword": optString(cmd, "keyword"), "limit": optInt(cmd, "limit"),
+			}
+			if len(args) == 1 {
+				fields["url"] = args[0]
+			}
+			if fields["url"] == nil && fields["title"] == nil && fields["h1"] == nil {
+				return usageError("seo links needs a url or a draft --title/--h1")
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/link_sources"), body(fields))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				return joinLines(linkSourceLines(table.AsObject(data), []string{"path", "title", "level", "confidence"}), "\n")
+			})
+			return nil
+		},
+	}
+	c.Flags().String("title", "", "draft title (pre-publish)")
+	c.Flags().String("h1", "", "draft h1 (pre-publish)")
+	c.Flags().String("lead", "", "draft opening paragraph (pre-publish)")
+	c.Flags().String("keyword", "", "keyword the page targets")
+	c.Flags().Int("limit", 0, "sources to return (default 5)")
+	return c
+}
+
+func fitCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "fit",
+		Short: "judge each tracked keyword's pinned page: answer first, title words, page type (paid, cents)",
+		Args:  maxArgs(0, "seo fit [--set]"),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/page_fit"), body(map[string]any{"set_name": optString(cmd, "set")}))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				root := table.AsObject(data)
+				if root["status"] != "checked" {
+					return fmt.Sprintf("page fit: %v", root["status"])
+				}
+				lines := []string{"page fit " + table.SummaryOf(table.AsObject(root["counts"]))}
+				var flagged []table.Row
+				for _, row := range table.AsRows(root["rows"]) {
+					if row["verdict"] != "fits" {
+						flagged = append(flagged, row)
+					}
+				}
+				if len(flagged) > 0 {
+					lines = append(lines, table.Table(flagged, []string{"verdict", "keyword", "url", "answer_first", "title_match", "format"}, nil))
+				}
+				if missing := table.AsRows(root["not_audited"]); len(missing) > 0 {
+					lines = append(lines, fmt.Sprintf("not in the latest audit: %d keywords (page missing or not in the sitemap)", len(missing)))
+				}
+				return joinLines(lines, "\n")
+			})
+			return nil
+		},
+	}
+	c.Flags().String("set", "", "keyword set (default: every tracked keyword with a target path)")
+	return c
+}
+
+func linkSourceLines(result table.Row, columns []string) []string {
+	if result == nil {
+		return nil
+	}
+	if result["status"] == "no_audit" {
+		return []string{"link sources: no completed site audit yet (run seo audit run)"}
+	}
+	if result["status"] == "error" {
+		return []string{fmt.Sprintf("link sources: %v", result["error"])}
+	}
+	lines := []string{fmt.Sprintf("link sources by %v over %v audited pages", result["method"], result["candidates"])}
+	if rows := table.AsRows(result["sources"]); len(rows) > 0 {
+		lines = append(lines, table.Table(rows, columns, nil))
+	} else {
+		lines = append(lines, "no page has a strong reason to link here")
+	}
+	if already := table.AsRows(result["already_linking"]); len(already) > 0 {
+		lines = append(lines, fmt.Sprintf("already linking: %d", len(already)))
+	} else if list, ok := result["already_linking"].([]any); ok && len(list) > 0 {
+		lines = append(lines, fmt.Sprintf("already linking: %d", len(list)))
+	}
+	return lines
 }
 
 var experimentColumns = []string{"id", "shipped_on", "page", "change", "hypothesis", "outcome", "outcome_on"}

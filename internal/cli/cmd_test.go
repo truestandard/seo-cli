@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -53,5 +54,54 @@ func TestBodyAddsDryRunOnlyWhenSet(t *testing.T) {
 	}
 	if _, has := payload["a"]; has {
 		t.Fatal("nil field kept")
+	}
+}
+
+func TestRenderVisibilityShowsJudgment(t *testing.T) {
+	var data any
+	raw := `{"report":{"cells":6,"competitor_share_of_voice":{"Examine":2},"competitor_share_of_voice_method":"jev_suggested",
+		"judgment":{"stance":{"one_of_several":1},"rival_cited":{"WebMD":1},"cells_unjudged":2,"review":[{"prompt":"won query","engine":"gpt-5.5","subject":"Healthline","verdict":"incidental","confidence":0.45}]}}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := renderVisibility(data)
+	for _, want := range []string{"rivals recommended", "Examine", "stance", "one_of_several", "unjudged answers 2", "Healthline", "incidental", "cited as a source WebMD"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
+func TestLinkSourceLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"status":"ranked","method":"jev","candidates":12,"sources":[{"path":"/guides/iron","title":"Iron","level":3.5,"links_now":true}],"already_linking":["https://x.test/a"]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(linkSourceLines(data, []string{"path", "title", "level", "links_now"}), "\n")
+	for _, want := range []string{"by jev over 12", "/guides/iron", "already linking: 1"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if got := linkSourceLines(map[string]any{"status": "no_audit"}, nil); !strings.Contains(got[0], "no completed site audit") {
+		t.Errorf("no_audit line: %v", got)
+	}
+}
+
+func TestTriageLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"status":"triaged","counts":{"buyer":2,"job_seeker":1},"warnings":["no context"],
+		"groups":[{"head":"ai audit","volume":199,"keywords":["ai audit","audit ai"]}],
+		"keywords":[{"keyword":"ai consultant salary","relevance":"job_seeker","confidence":0.99,"keep":false},{"keyword":"ai audit","relevance":"buyer","keep":true}],
+		"review":{"relevance":[{"keyword":"x"}],"pairs":[]}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(triageLines(data), "\n")
+	for _, want := range []string{"buyer", "warning: no context", "ai audit, audit ai", "screened out", "ai consultant salary", "review: 1 unclear"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
 	}
 }
