@@ -17,6 +17,7 @@ stdout is JSON on success and on failure. Parse it. stderr carries notices for p
 seo projects                                  list projects
 seo project show [slug] | create <slug> --name --domain [--repo-path --location-code --language-code]
 seo use <slug>                                set the default project
+seo project set <key=value...>                                   plan budgets and ship_mode, merged into settings
 seo context [get] | set <key> [text] [--file] | add-competitor <domain> | add-page <path> | log <kind> <summary>
 seo keywords [list --set] | add <kw...> [--track --path --set --locked --volume --kd] | update <id> [--path --track --status] | remove <id...>
 seo research <seeds...> [--limit --max-kd --keywords]            paid, triages what it buys
@@ -34,6 +35,7 @@ seo audit [run --lighthouse --pages --max-pages] | show <id> | list [--limit]   
 seo gsc import <csv> --dimension query|page --start --end | striking
 seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pages that should link here
 seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
+seo plan [--articles N | --latest]                               paid, cents: the week's fixes, refreshes, pages, free tools, and what needs a person
 seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now
 seo experiments [list] | add <change...> [--page --hypothesis --keyword --shipped-on] | outcome <id> <text...>
 seo log [--kind --days]
