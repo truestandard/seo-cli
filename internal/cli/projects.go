@@ -1,6 +1,9 @@
 package cli
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/truestandard/seo-cli/internal/api"
@@ -37,9 +40,9 @@ func projectsCmd() *cobra.Command {
 
 func projectCmd() *cobra.Command {
 	c := &cobra.Command{Use: "project", Short: "show or create a project"}
-	c.AddCommand(projectShowCmd(), projectCreateCmd())
+	c.AddCommand(projectShowCmd(), projectCreateCmd(), projectSetCmd())
 	c.RunE = projectShowCmd().RunE
-	c.Args = maxArgs(1, "seo project [show [slug] | create <slug>]")
+	c.Args = maxArgs(1, "seo project [show [slug] | create <slug> | set <key=value...>]")
 	return c
 }
 
@@ -126,4 +129,53 @@ func useCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func projectSetCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "set <key=value...>",
+		Short: "merge settings into the current project, e.g. articles_per_month=12 ship_mode=pr",
+		Args:  minArgs(1, "seo project set <key=value...>"),
+		RunE: func(_ *cobra.Command, args []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			settings, err := parseSettings(args)
+			if err != nil {
+				return err
+			}
+			data, err := client.Patch(api.ProjectPath(slug, ""), map[string]any{"settings": settings})
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string { return table.KeyValueBlock(pairsOf(projectFields(data))) })
+			return nil
+		},
+	}
+}
+
+func parseSettings(args []string) (map[string]any, error) {
+	settings := map[string]any{}
+	for _, arg := range args {
+		key, raw, found := strings.Cut(arg, "=")
+		if !found || key == "" {
+			return nil, usageError("settings are key=value, got " + strconv.Quote(arg))
+		}
+		settings[key] = settingValue(raw)
+	}
+	return settings, nil
+}
+
+func settingValue(raw string) any {
+	if number, err := strconv.Atoi(raw); err == nil {
+		return number
+	}
+	if number, err := strconv.ParseFloat(raw, 64); err == nil {
+		return number
+	}
+	if flag, err := strconv.ParseBool(raw); err == nil {
+		return flag
+	}
+	return raw
 }

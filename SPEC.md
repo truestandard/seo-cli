@@ -56,6 +56,7 @@ Keywords  keywords list|add|update|remove | research* | triage* | serp* | floor*
 Ranks     track run*|status | ranks
 AI        prompts list|add | ai run*|results|status | mentions*
 Site      backlinks* | domain* | audit run*|show|list | gsc import|striking | links* | fit* | ship | experiments list|add|outcome
+Plan      plan* [--articles N | --latest]
 Read      log | scoreboard | spend
 Meta      estimate <paid> | mcp | skills install|list|doctor|uninstall | version
 ```
