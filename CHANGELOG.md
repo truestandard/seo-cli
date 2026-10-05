@@ -15,6 +15,7 @@
 - New command: `plan` picks the week's site fixes, refreshes, new pages and free tools from the data, and lists what needs a person. `--latest` reads the last plan for free.
 - New command: `competitors watch`. It reads the weekly watch: new pages on each rival's site, the searches they gained and lost, and the searches worth a page from you. `--run` takes a snapshot now.
 - `ai results` shows how each answer treats the brand, and counts rivals the answers recommend apart from rivals they only name.
+- `audit watch` reads the daily site check: problems that are new since the run before, problems that got fixed, open critical rows and rule counts that moved.
 
 ## 0.1.0 (unpublished)
 

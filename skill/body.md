@@ -32,6 +32,7 @@ seo backlinks [domain] [--history --months --rows]               paid
 seo domain [domain] [--limit --force]                            paid, cached 12h
 seo mentions [--brand --competitor ... --force]                  paid, cached 24h
 seo audit [run --lighthouse --pages --max-pages] | show <id> | list [--limit]   paid with --lighthouse
+seo audit watch                                                  what broke and what got fixed since the run before
 seo gsc import <csv> --dimension query|page --start --end | striking
 seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pages that should link here
 seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
