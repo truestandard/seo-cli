@@ -34,6 +34,7 @@ seo audit [run --lighthouse --pages --max-pages] | show <id> | list [--limit]   
 seo gsc import <csv> --dimension query|page --start --end | striking
 seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pages that should link here
 seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
+seo competitors watch [--run]                                    read the weekly watch; --run is paid, about $0.08 per competitor
 seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now
 seo experiments [list] | add <change...> [--page --hypothesis --keyword --shipped-on] | outcome <id> <text...>
 seo log [--kind --days]

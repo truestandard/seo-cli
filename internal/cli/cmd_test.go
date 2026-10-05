@@ -105,3 +105,27 @@ func TestTriageLines(t *testing.T) {
 		}
 	}
 }
+
+func TestCompetitorWatchLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"status":"ok","taken_on":"2026-10-07","cost":"0.1455","competitors":[{"domain":"vidiq.com","baseline":false,"removed_pages_count":2,
+		"new_pages":[{"url":"https://vidiq.com/blog/comment-search","title":"Search comments","relevance":"competes_for_our_buyers"},{"url":"https://vidiq.com/careers","title":null,"relevance":"irrelevant"}],
+		"keywords_gained":[{"keyword":"youtube comment search","position":7}],"keywords_lost":[],"error":null}],
+		"opportunities":[{"keyword":"youtube comment search","volume":1200,"kd":14,"competitor":"vidiq.com","their_position":7,"relevance":"buyer","tracked":false,"our_position":null}],
+		"run":{"spent":"0.1455","cap":"1.0"}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(competitorWatchLines(data), "\n")
+	for _, want := range []string{"competitor watch ok on 2026-10-07", "vidiq.com", "compete for your buyers", "Search comments", "opportunities", "youtube comment search", "spent $0.1455 of a $1.0 cap"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "https://vidiq.com/careers") {
+		t.Errorf("irrelevant page listed:\n%s", out)
+	}
+	if lines := competitorWatchLines(map[string]any{"status": "none"}); !strings.Contains(lines[0], "--run") {
+		t.Errorf("empty watch should point at --run: %v", lines)
+	}
+}
