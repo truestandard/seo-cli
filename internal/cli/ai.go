@@ -102,10 +102,49 @@ func aiCmd() *cobra.Command {
 	c := &cobra.Command{Use: "ai", Short: "AI answer scans: run one, read the results, or check a scan"}
 	run := aiRunCmd()
 	c.RunE = run.RunE
-	c.Args = exactArgs(0, "seo ai [run | results | status <id>]")
+	c.Args = exactArgs(0, "seo ai [run | results | status <id> | fixes]")
 	c.Flags().AddFlagSet(run.Flags())
-	c.AddCommand(run, aiResultsCmd(), aiStatusCmd())
+	c.AddCommand(run, aiResultsCmd(), aiStatusCmd(), aiFixesCmd())
 	return c
+}
+
+func aiFixesCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "fixes",
+		Short: "actions from the latest AI scan, AI Overview checks and site audit",
+		Args:  exactArgs(0, "seo ai fixes [--set guarantee]"),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Get(api.ProjectPath(slug, "/ai_fixes"), api.Query{"set": flagString(cmd, "set")})
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string { return renderFixes(data) })
+			return nil
+		},
+	}
+	c.Flags().String("set", "guarantee", "prompt set")
+	return c
+}
+
+func renderFixes(data any) string {
+	root := table.AsObject(data)
+	rows := table.AsRows(root["actions"])
+	header := fmt.Sprintf("ai fixes: %v, scan %v measured %v", root["status"], root["scan_id"], root["measured_at"])
+	if len(rows) == 0 {
+		return header + "\nno actions"
+	}
+	human := 0
+	for _, row := range rows {
+		if row["needs_human"] == true {
+			human++
+		}
+	}
+	header += fmt.Sprintf(", %s, %d need a person", pluralize(len(rows), "action"), human)
+	return joinLines([]string{header, table.Table(rows, []string{"priority", "kind", "prompt", "keyword", "page", "engines", "needs_human"}, map[string]string{"needs_human": "person"})}, "\n")
 }
 
 func aiRunCmd() *cobra.Command {
@@ -215,6 +254,20 @@ func renderVisibility(data any) string {
 			lines = append(lines, label+" "+table.SummaryOf(rivals))
 		}
 		lines = append(lines, judgmentLines(table.AsObject(report["judgment"]))...)
+		lines = append(lines, accuracyLines(table.AsObject(report["accuracy"]))...)
+	}
+	if supplementary := table.AsObject(root["supplementary"]); supplementary != nil {
+		if report := table.AsObject(supplementary["report"]); report != nil {
+			lines = append(lines, "supplementary "+table.SummaryLine(fieldsOf(report, "models", "cells", "named", "cited", "queries_hit")))
+		}
+	}
+	if overview := table.AsObject(root["ai_overview"]); overview != nil {
+		if count, ok := overview["with_ai_overview"].(float64); ok && count > 0 {
+			lines = append(lines, "ai overviews "+table.SummaryLine(fieldsOf(overview, "with_ai_overview", "cited", "not_cited", "cited_unknown")))
+			if sources := table.AsRows(overview["top_sources"]); len(sources) > 0 {
+				lines = append(lines, table.Table(sources, []string{"domain", "keywords"}, nil))
+			}
+		}
 	}
 	if deltas := table.AsObject(root["deltas"]); deltas != nil {
 		if totals := table.AsObject(deltas["totals"]); totals != nil {
@@ -248,6 +301,20 @@ func judgmentLines(judgment table.Row) []string {
 	}
 	if rows := table.AsRows(judgment["review"]); len(rows) > 0 {
 		lines = append(lines, "review", table.Table(rows, []string{"prompt", "engine", "subject", "verdict", "confidence"}, nil))
+	}
+	return lines
+}
+
+func accuracyLines(accuracy table.Row) []string {
+	if accuracy == nil || accuracy["status"] == "no_facts" {
+		return nil
+	}
+	lines := []string{"accuracy " + table.SummaryLine(fieldsOf(accuracy, "facts", "cells_checked", "cells_unchecked"))}
+	if rows := table.AsRows(accuracy["inaccuracies"]); len(rows) > 0 {
+		lines = append(lines, "wrong facts", table.Table(rows, []string{"prompt", "engine", "fact", "confidence"}, nil))
+	}
+	if rows := table.AsRows(accuracy["review"]); len(rows) > 0 {
+		lines = append(lines, "facts to review", table.Table(rows, []string{"prompt", "engine", "fact", "confidence"}, nil))
 	}
 	return lines
 }
