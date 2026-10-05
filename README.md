@@ -84,6 +84,7 @@ seo backlinks [domain] [--history --months --rows]   paid
 seo domain [domain] [--limit --force]                paid, cached 12h
 seo mentions [--brand --competitor... --force]       paid, cached 24h
 seo audit [run [--lighthouse] | show <id> | list]    paid with --lighthouse
+seo audit watch                                      new and fixed site problems since the run before
 seo gsc [import <csv> --dimension --start --end | striking]
 seo links [url] [--title --h1 --lead --keyword]      paid, cents
 seo fit [--set]                                      paid, cents

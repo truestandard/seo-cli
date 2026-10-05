@@ -105,3 +105,28 @@ func TestTriageLines(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderWatch(t *testing.T) {
+	var data any
+	raw := `{"run_id":12,"finished_at":"2026-10-04T06:01:00Z","status":"completed",
+		"new_issues":[{"severity":"critical","rule":"broken_internal_link","url":"https://x.test/old","detail":"returned HTTP 404"}],
+		"resolved":[{"severity":"warning","rule":"orphan_page","url":"https://x.test/a"}],
+		"open_critical":[{"rule":"broken_internal_link","url":"https://x.test/old","how_to_fix":"Fix the page"}],
+		"open_warning_count":3,
+		"rule_counts":{"broken_internal_link":{"before":0,"after":1},"missing_h1":{"before":2,"after":2}}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := renderWatch(data)
+	for _, want := range []string{"run=12", "new=1", "resolved=1", "open_warnings=3", "broken_internal_link", "https://x.test/old", "orphan_page", "rule counts that moved"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "missing_h1") {
+		t.Errorf("unchanged rule listed:\n%s", out)
+	}
+	if got := renderWatch(map[string]any{"status": "no_run"}); !strings.Contains(got, "no completed site audit") {
+		t.Errorf("no_run: %q", got)
+	}
+}

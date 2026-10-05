@@ -15,10 +15,63 @@ func auditCmd() *cobra.Command {
 	c := &cobra.Command{Use: "audit", Short: "site audits: own crawler over the sitemap, key pages and retired paths"}
 	run := auditRunCmd()
 	c.RunE = run.RunE
-	c.Args = exactArgs(0, "seo audit [run | show <id> | list]")
+	c.Args = exactArgs(0, "seo audit [run | show <id> | list | watch]")
 	c.Flags().AddFlagSet(run.Flags())
-	c.AddCommand(run, auditShowCmd(), auditListCmd())
+	c.AddCommand(run, auditShowCmd(), auditListCmd(), auditWatchCmd())
 	return c
+}
+
+func auditWatchCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "watch",
+		Short: "the daily site watch: what broke and what got fixed since the run before",
+		Args:  exactArgs(0, "seo audit watch"),
+		RunE: func(_ *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Get(api.ProjectPath(slug, "/site_watch"), nil)
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string { return renderWatch(data) })
+			return nil
+		},
+	}
+}
+
+func renderWatch(data any) string {
+	root := table.AsObject(data)
+	if root["status"] == "no_run" {
+		return "no completed site audit yet: seo audit run"
+	}
+	newIssues, resolved, critical := table.AsRows(root["new_issues"]), table.AsRows(root["resolved"]), table.AsRows(root["open_critical"])
+	lines := []string{table.SummaryLine([]table.Pair{
+		{Key: "run", Value: root["run_id"]}, {Key: "finished_at", Value: root["finished_at"]},
+		{Key: "new", Value: len(newIssues)}, {Key: "resolved", Value: len(resolved)},
+		{Key: "open_critical", Value: len(critical)}, {Key: "open_warnings", Value: root["open_warning_count"]},
+	})}
+	if len(newIssues) > 0 {
+		lines = append(lines, "new", table.Table(newIssues, []string{"severity", "rule", "url", "detail"}, nil))
+	}
+	if len(resolved) > 0 {
+		lines = append(lines, "resolved", table.Table(resolved, []string{"severity", "rule", "url"}, nil))
+	}
+	if len(critical) > 0 {
+		lines = append(lines, "open critical", table.Table(critical, []string{"rule", "url", "how_to_fix"}, nil))
+	}
+	var moved []table.Row
+	for _, pair := range pairsOf(table.AsObject(root["rule_counts"])) {
+		counts := table.AsObject(pair.Value)
+		if table.Cell(counts["before"]) != table.Cell(counts["after"]) {
+			moved = append(moved, table.Row{"rule": pair.Key, "before": counts["before"], "after": counts["after"]})
+		}
+	}
+	if len(moved) > 0 {
+		lines = append(lines, "rule counts that moved", table.Table(moved, []string{"rule", "before", "after"}, nil))
+	}
+	return joinLines(lines, "\n")
 }
 
 func auditRunCmd() *cobra.Command {

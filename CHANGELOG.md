@@ -13,6 +13,7 @@
 - New commands: `triage` (who is searching each keyword, and which keywords one page answers), `links` (audited pages ranked as internal-link sources for a live url or a draft), `fit` (does each tracked keyword's page answer it up front, in its words, in the right form).
 - `research` prints the triage of what it bought; `ship` prints ranked link sources and whether each links to the new page yet.
 - `ai results` shows how each answer treats the brand, and counts rivals the answers recommend apart from rivals they only name.
+- `audit watch` reads the daily site check: problems that are new since the run before, problems that got fixed, open critical rows and rule counts that moved.
 
 ## 0.1.0 (unpublished)
 
