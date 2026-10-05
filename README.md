@@ -88,6 +88,7 @@ seo gsc [import <csv> --dimension --start --end | striking]
 seo links [url] [--title --h1 --lead --keyword]      paid, cents
 seo fit [--set]                                      paid, cents
 seo plan [--articles N | --latest]                   paid, cents
+seo competitors watch [--run]                        paid with --run
 seo ship <url> [--keyword --track --note]
 seo experiments [list | add <change...> | outcome <id> <text...>]
 seo log [--kind --days]
