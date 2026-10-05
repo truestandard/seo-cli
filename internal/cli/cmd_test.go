@@ -105,3 +105,39 @@ func TestTriageLines(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderFixes(t *testing.T) {
+	var data any
+	raw := `{"status":"ready","scan_id":7,"measured_at":"2026-10-04","actions":[
+		{"kind":"correct_fact","priority":1,"prompt":"what does taffy cost","page":null,"engines":["perplexity-sonar-pro"],"needs_human":true},
+		{"kind":"aio_citable","priority":2,"keyword":"youtube comment search","page":"/","engines":["google-ai-overview"],"needs_human":false}]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := renderFixes(data)
+	for _, want := range []string{"ai fixes: ready, scan 7", "2 actions, 1 need a person", "correct_fact", "perplexity-sonar-pro", "youtube comment search", "person"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if got := renderFixes(map[string]any{"status": "no_scan", "actions": []any{}}); !strings.Contains(got, "no actions") {
+		t.Errorf("empty fixes: %s", got)
+	}
+}
+
+func TestRenderVisibilityShowsAccuracyAndOverviews(t *testing.T) {
+	var data any
+	raw := `{"report":{"cells":8,"accuracy":{"status":"checked","facts":3,"cells_checked":4,"cells_unchecked":1,
+		"inaccuracies":[{"prompt":"taffy pricing","engine":"gpt-5.6-sol","fact":"Pro costs $19 a month","confidence":0.91}],"review":[]}},
+		"supplementary":{"report":{"models":["perplexity/sonar-pro"],"cells":4,"named":1,"cited":0,"queries_hit":1}},
+		"ai_overview":{"with_ai_overview":3,"cited":0,"not_cited":3,"cited_unknown":0,"top_sources":[{"domain":"reddit.com","keywords":2}]}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := renderVisibility(data)
+	for _, want := range []string{"accuracy", "cells_unchecked", "wrong facts", "Pro costs $19 a month", "supplementary", "perplexity/sonar-pro", "ai overviews", "reddit.com"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}
