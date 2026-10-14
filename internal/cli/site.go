@@ -392,6 +392,51 @@ func fitCmd() *cobra.Command {
 	return c
 }
 
+func gapCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "gap <keyword>",
+		Short: "topics the top 5 pages cover that our page lacks (paid, about $0.002 when no SERP is stored)",
+		Args:  exactArgs(1, "seo gap <keyword> [--page /path] [--force]"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			fields := map[string]any{"keyword": args[0], "page": optString(cmd, "page"), "force": optTrue(cmd, "force")}
+			data, err := client.Post(api.ProjectPath(slug, "/topic_gap"), body(fields))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				return joinLines(topicGapLines(table.AsObject(data)), "\n")
+			})
+			return nil
+		},
+	}
+	c.Flags().String("page", "", "our page path (default: the keyword's target page)")
+	c.Flags().Bool("force", false, "run again even when a result under 30 days old exists")
+	return c
+}
+
+func topicGapLines(root table.Row) []string {
+	page := "no page of ours"
+	if ours := table.AsObject(root["our_page"]); ours != nil && ours["path"] != nil {
+		page = fmt.Sprint(ours["path"])
+	}
+	lines := []string{fmt.Sprintf("topic gap for %v: %v (%v SERP), %v pages compared, %d topics, %d missing from %s",
+		root["keyword"], root["status"], root["serp"], root["pages_compared"], len(table.AsRows(root["topics"])), len(table.AsRows(root["missing"])), page)}
+	if missing := table.AsRows(root["missing"]); len(missing) > 0 {
+		lines = append(lines, table.Table(missing, []string{"priority", "covered_by", "label"}, nil))
+	}
+	if emerging, ok := root["emerging"].([]any); ok && len(emerging) > 0 {
+		lines = append(lines, fmt.Sprintf("only on our page: %d topics", len(emerging)))
+	}
+	return lines
+}
+
 func linkSourceLines(result table.Row, columns []string) []string {
 	if result == nil {
 		return nil
