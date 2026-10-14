@@ -225,3 +225,31 @@ func TestRenderWatch(t *testing.T) {
 		t.Errorf("no_run: %q", got)
 	}
 }
+
+func TestCompetitorStudyLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"domain":"gamma.app","pages_read":812,"etv":91234.5,"cost":"0.13","cached":false,
+		"sections":[{"path":"/es/","pattern":"localized","locale":"es","pages":40,"etv":30000.0,"share":0.33,"new_ranking_pages":2},{"path":"/docs/","pattern":"user_generated","pages":500,"etv":12000.0,"share":0.13,"new_ranking_pages":40}],
+		"gaps":[{"pattern":"localized","their_pages":40,"their_etv":30000.0,"their_share":0.33,"sections":["/es/"]}],
+		"new_pages":[{"url":"https://gamma.app/docs/Pitch-abc123xyz","etv":900.0,"keywords":30,"section":"/docs/","first_seen":null}]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(competitorStudyLines(data), "\n")
+	for _, want := range []string{"gamma.app: 812 pages in 2 sections", "cost $0.13", "33.0%", "localized", "user_generated", "page types they rank with and you lack", "pages that started to rank", "Pitch-abc123xyz"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	section := map[string]any{"domain": "gamma.app", "path": "/templates/", "pattern": "templates", "markets": "project", "total_count": 57.0, "cached": true, "studied_at": "2026-10-14",
+		"keywords": []any{map[string]any{"keyword": "pitch deck template", "position": 2.0, "keep": true}, map[string]any{"keyword": "gamma login", "position": 1.0, "keep": false}}}
+	lines := strings.Join(competitorStudyLines(section), "\n")
+	for _, want := range []string{"gamma.app /templates/ (templates, project markets): 2 of 57 searches, 1 for your buyers", "reused from 2026-10-14", "pitch deck template"} {
+		if !strings.Contains(lines, want) {
+			t.Errorf("missing %q in:\n%s", want, lines)
+		}
+	}
+	if empty := competitorStudyLines(map[string]any{"status": "none", "domain": "gamma.app"}); !strings.Contains(empty[0], "seo competitors study gamma.app") {
+		t.Errorf("empty study should point at the command: %v", empty)
+	}
+}
