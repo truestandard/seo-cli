@@ -109,8 +109,9 @@ func TestTriageLines(t *testing.T) {
 func TestPlanLines(t *testing.T) {
 	var data map[string]any
 	raw := `{"status":"planned","cost":0.02,
+		"focus":{"keyword":"comment search","page":"/cs","until":"2026-11-13"},
 		"fixes":[{"severity":"critical","rule":"sitemap_non_200","count":2,"new":1,"how_to_fix":"Fix it."}],
-		"refreshes":[{"source":"decay","keyword":"comment search","page":"/cs","position":12,"value":4.1}],
+		"refreshes":[{"source":"decay","keyword":"comment search","page":"/cs","position":12,"value":4.1,"link_sources":[{"url":"https://taffy.test/hub","title":"Hub"}]}],
 		"new_pages":{"articles":[{"keyword":"how to search youtube comments","track":"C","format":"guide","floor":"winnable","expected_clicks":72,"drafting":"serp-outline + ai-seo"}],"comparisons":[],"free_tools":[{"keyword":"youtube comment picker","track":"tool","format":"tool"}]},
 		"needs_human":[{"kind":"forum_reply","keyword":"old comments","human_reason":"forum threads hold page one"}],
 		"deferred":[{"keyword":"x"}]}`
@@ -118,7 +119,7 @@ func TestPlanLines(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := planLines(data)
-	for _, want := range []string{"site fixes", "sitemap_non_200", "refreshes", "decay", "articles", "free_tools", "youtube comment picker", "needs a person", "forum threads", "deferred: 1"} {
+	for _, want := range []string{"site fixes", "sitemap_non_200", "refreshes", "decay", "articles", "free_tools", "youtube comment picker", "needs a person", "forum threads", "deferred: 1", "focus: comment search on /cs until 2026-11-13", "add internal links", "https://taffy.test/hub"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}

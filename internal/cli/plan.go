@@ -47,11 +47,23 @@ func planLines(data any) string {
 		return fmt.Sprintf("publish plan: %v", root["status"])
 	}
 	lines := []string{}
+	if focus := table.AsObject(root["focus"]); focus != nil {
+		lines = append(lines, fmt.Sprintf("focus: %v on %v until %v", focus["keyword"], focus["page"], focus["until"]))
+	}
 	if fixes := table.AsRows(root["fixes"]); len(fixes) > 0 {
 		lines = append(lines, "site fixes", table.Table(fixes, []string{"severity", "rule", "count", "new", "how_to_fix"}, nil))
 	}
 	if refreshes := table.AsRows(root["refreshes"]); len(refreshes) > 0 {
 		lines = append(lines, "refreshes", table.Table(refreshes, []string{"source", "keyword", "page", "position", "value"}, nil))
+		var links []table.Row
+		for _, refresh := range refreshes {
+			for _, source := range table.AsRows(refresh["link_sources"]) {
+				links = append(links, table.Row{"page": refresh["page"], "link_from": source["url"]})
+			}
+		}
+		if len(links) > 0 {
+			lines = append(lines, "add internal links", table.Table(links, []string{"page", "link_from"}, nil))
+		}
 	}
 	pages := table.AsObject(root["new_pages"])
 	for _, lane := range []string{"articles", "comparisons", "free_tools"} {
