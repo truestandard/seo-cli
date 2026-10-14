@@ -89,6 +89,26 @@ func TestLinkSourceLines(t *testing.T) {
 	}
 }
 
+func TestTopicGapLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"keyword":"iron panel","status":"compared","serp":"stored","pages_compared":5,"our_page":{"path":"/guides/iron-panel"},"topics":[{"label":"Iron panel cost"},{"label":"What is an iron panel"}],"missing":[{"label":"Iron panel cost","covered_by":4,"priority":"high"}],"emerging":["Our lab partners"]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(topicGapLines(data), "\n")
+	for _, want := range []string{"compared (stored SERP), 5 pages compared, 2 topics, 1 missing from /guides/iron-panel", "Iron panel cost", "high", "only on our page: 1 topics"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if !IsPaid("gap") {
+		t.Error("gap must be a paid command")
+	}
+	if got := strings.Join(topicGapLines(map[string]any{"keyword": "x", "status": "no_serp"}), "\n"); !strings.Contains(got, "no page of ours") {
+		t.Errorf("no page line: %s", got)
+	}
+}
+
 func TestTriageLines(t *testing.T) {
 	var data map[string]any
 	raw := `{"status":"triaged","counts":{"buyer":2,"job_seeker":1},"warnings":["no context"],

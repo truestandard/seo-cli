@@ -88,6 +88,7 @@ seo audit watch                                      new and fixed site problems
 seo gsc [import <csv> --dimension --start --end | striking]
 seo links [url] [--title --h1 --lead --keyword]      paid, cents
 seo fit [--set]                                      paid, cents
+seo gap <keyword> [--page /path --force]             paid, $0 to $0.002, cached 30 days
 seo plan [--articles N | --latest]                   paid, cents
 seo competitors watch [--run]                        paid with --run
 seo ship <url> [--keyword --track --note]

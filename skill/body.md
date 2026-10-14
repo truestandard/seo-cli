@@ -36,6 +36,7 @@ seo audit watch                                                  what broke and 
 seo gsc import <csv> --dimension query|page --start --end | striking
 seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pages that should link here
 seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
+seo gap <keyword> [--page /path --force]                         paid, $0 to $0.002: topics the top 5 pages cover that ours lacks
 seo plan [--articles N | --latest]                               paid, cents: the week's fixes, refreshes, pages, free tools, and what needs a person
 seo competitors watch [--run]                                    read the weekly watch; --run is paid, about $0.08 per competitor
 seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now

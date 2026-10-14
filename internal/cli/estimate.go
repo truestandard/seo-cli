@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var PaidCommands = []string{"research", "serp", "track", "ai", "floor", "backlinks", "domain", "mentions", "audit", "links", "triage", "fit", "plan", "competitors"}
+var PaidCommands = []string{"research", "serp", "track", "ai", "floor", "backlinks", "domain", "mentions", "audit", "links", "triage", "fit", "gap", "plan", "competitors"}
 
 func IsPaid(name string) bool {
 	for _, paid := range PaidCommands {
