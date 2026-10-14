@@ -38,6 +38,7 @@ seo links [url] [--title --h1 --lead --keyword --limit]          paid, cents: pa
 seo fit [--set]                                                  paid, cents: does each pinned page answer its keyword
 seo plan [--articles N | --latest]                               paid, cents: the week's fixes, refreshes, pages, free tools, and what needs a person
 seo competitors watch [--run]                                    read the weekly watch; --run is paid, about $0.08 per competitor
+seo competitors study <domain> [--section /templates/]           a rival's visits by section in every market and the page types you lack; about $0.13, a section $0.04
 seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now
 seo experiments [list] | add <change...> [--page --hypothesis --keyword --shipped-on] | outcome <id> <text...>
 seo log [--kind --days]
