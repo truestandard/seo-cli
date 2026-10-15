@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -345,7 +346,67 @@ func linksCmd() *cobra.Command {
 	c.Flags().String("lead", "", "draft opening paragraph (pre-publish)")
 	c.Flags().String("keyword", "", "keyword the page targets")
 	c.Flags().Int("limit", 0, "sources to return (default 5)")
+	c.AddCommand(linksIntersectCmd())
 	return c
+}
+
+func linksIntersectCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "intersect",
+		Short: "sites that link to two or more competitors and not to you (paid, about $0.19; reused free for 30 days)",
+		Args:  exactArgs(0, "seo links intersect [--force] [--latest] [--dry-run]"),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			path := api.ProjectPath(slug, "/link_intersect")
+			var data any
+			if optTrue(cmd, "latest") != nil {
+				data, err = client.Get(path, nil)
+			} else {
+				data, err = client.Post(path, body(map[string]any{"force": optTrue(cmd, "force")}))
+			}
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				return joinLines(linkIntersectLines(table.AsObject(data)), "\n")
+			})
+			return nil
+		},
+	}
+	c.Flags().Bool("force", false, "run again even when a run under 30 days old exists")
+	c.Flags().Bool("latest", false, "read the latest stored run without running one")
+	return c
+}
+
+func linkIntersectLines(root table.Row) []string {
+	if root["status"] == "none" {
+		return []string{"no link intersect yet: seo links intersect"}
+	}
+	rows := table.AsRows(root["domains"])
+	for _, row := range rows {
+		rivals := []string{}
+		if list, ok := row["linking_rivals"].([]any); ok {
+			for _, rival := range list {
+				rivals = append(rivals, fmt.Sprint(rival))
+			}
+		}
+		row["linking_rivals"] = strings.Join(rivals, ", ")
+	}
+	spent := "cost " + table.Money(root["cost"])
+	if root["cached"] == true {
+		spent = fmt.Sprintf("reused %v, nothing spent", root["studied_at"])
+	}
+	lines := []string{fmt.Sprintf("%d sites link to 2+ of your rivals and not to %v (%s)", len(rows), root["domain"], spent)}
+	if len(rows) > 0 {
+		lines = append(lines, table.Table(rows, []string{"domain", "rival_count", "linking_rivals", "rank", "backlinks", "first_seen"}, nil))
+	}
+	return lines
 }
 
 func fitCmd() *cobra.Command {
