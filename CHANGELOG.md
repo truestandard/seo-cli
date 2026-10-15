@@ -10,6 +10,7 @@
 - `seo skills install` writes an agent skill into `.claude/skills/seo/` or a managed block in `AGENTS.md`. Login does it once.
 - New commands: `domain`, `mentions`, `audit`.
 - Default backend is https://truestandard.agency.
+- New command group: `seo ai agents` adds agent tasks, drafts candidates (`suggest`), runs the agent panel (does a coding agent pick you, with and without web search) and prints each task's picks and lever (`results`).
 - New commands: `triage` (who is searching each keyword, and which keywords one page answers), `links` (audited pages ranked as internal-link sources for a live url or a draft), `fit` (does each tracked keyword's page answer it up front, in its words, in the right form).
 - `research` prints the triage of what it bought; `ship` prints ranked link sources and whether each links to the new page yet.
 - New command: `plan` picks the week's site fixes, refreshes, new pages and free tools from the data, and lists what needs a person. `--latest` reads the last plan for free.

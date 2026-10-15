@@ -102,10 +102,171 @@ func aiCmd() *cobra.Command {
 	c := &cobra.Command{Use: "ai", Short: "AI answer scans: run one, read the results, or check a scan"}
 	run := aiRunCmd()
 	c.RunE = run.RunE
-	c.Args = exactArgs(0, "seo ai [run | results | status <id> | fixes]")
+	c.Args = exactArgs(0, "seo ai [run | results | status <id> | fixes | agents]")
 	c.Flags().AddFlagSet(run.Flags())
-	c.AddCommand(run, aiResultsCmd(), aiStatusCmd(), aiFixesCmd())
+	c.AddCommand(run, aiResultsCmd(), aiStatusCmd(), aiFixesCmd(), aiAgentsCmd())
 	return c
+}
+
+const agentTaskSet = "agent_tasks"
+
+func aiAgentsCmd() *cobra.Command {
+	c := &cobra.Command{Use: "agents", Short: "agent panel: does a coding agent pick you for a task, with and without web search"}
+	results := aiAgentsResultsCmd()
+	c.RunE = results.RunE
+	c.Args = exactArgs(0, "seo ai agents [results | add <tasks...> | suggest | run]")
+	c.AddCommand(results, aiAgentsAddCmd(), aiAgentsSuggestCmd(), aiAgentsRunCmd())
+	return c
+}
+
+func aiAgentsAddCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "add <tasks...>",
+		Short: "add agent tasks, one per argument: what a developer would ask a coding agent to do",
+		Args:  minArgs(1, "seo ai agents add <tasks...> [--locked]"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			var prompts []any
+			for _, text := range args {
+				prompts = append(prompts, map[string]any{"text": text, "set_name": agentTaskSet, "locked": optBool(cmd, "locked")})
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/ai_prompts"), map[string]any{"prompts": compactAll(prompts)})
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				return table.Table(table.AsRows(data, "prompts", "ai_prompts"), []string{"id", "locked", "text"}, nil)
+			})
+			return nil
+		},
+	}
+	c.Flags().Bool("locked", false, "lock the tasks so the monthly run measures them")
+	return c
+}
+
+func aiAgentsSuggestCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "suggest",
+		Short: "draft candidate agent tasks from the project context (paid, about $0.02; nothing is saved)",
+		Args:  exactArgs(0, "seo ai agents suggest [--dry-run]"),
+		RunE: func(_ *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/agent_panel/suggest"), body(map[string]any{}))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				lines := []string{"candidate agent tasks (not saved; add the real ones with seo ai agents add):"}
+				tasks, _ := table.AsObject(data)["tasks"].([]any)
+				for _, task := range tasks {
+					lines = append(lines, fmt.Sprintf("  %v", task))
+				}
+				return joinLines(append(lines, "cost "+table.Money(table.AsObject(data)["cost"])), "\n")
+			})
+			return nil
+		},
+	}
+}
+
+func aiAgentsRunCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "run",
+		Short: "run the agent panel on every agent task, with and without web search (paid, about $0.26 a task)",
+		Args:  exactArgs(0, "seo ai agents run [--dry-run]"),
+		RunE: func(_ *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Post(api.ProjectPath(slug, "/agent_panel"), body(map[string]any{}))
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string {
+				if table.IsEstimate(data) {
+					return table.EstimateLine(data)
+				}
+				root := table.AsObject(data)
+				return fmt.Sprintf("agent panel %v (job %v), estimate %s; read it with seo ai agents results", root["status"], root["job_id"], table.Money(table.AsObject(root["estimate"])["cost"]))
+			})
+			return nil
+		},
+	}
+}
+
+func aiAgentsResultsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "results",
+		Short: "the latest agent panel: picks with and without search, and the lever per task",
+		Args:  exactArgs(0, "seo ai agents results"),
+		RunE: func(_ *cobra.Command, _ []string) error {
+			client, slug, err := projectClient()
+			if err != nil {
+				return err
+			}
+			data, err := client.Get(api.ProjectPath(slug, "/agent_panel"), nil)
+			if err != nil {
+				return err
+			}
+			output.Render(data, func() string { return joinLines(agentPanelLines(table.AsObject(data)), "\n") })
+			return nil
+		},
+	}
+}
+
+func agentPanelLines(root table.Row) []string {
+	if root["status"] == "none" {
+		return []string{fmt.Sprintf("no agent panel yet (%v tasks in %v): seo ai agents add \"<task>\", then seo ai agents run", root["prompts_in_set"], root["set_name"])}
+	}
+	ours := table.AsObject(root["ours"])
+	with := table.AsObject(ours["with_search"])
+	without := table.AsObject(ours["without_search"])
+	lines := []string{fmt.Sprintf("agent panel %v: %v picked %v/%v with search, %v/%v without, cost %s", root["run_on"], ours["name"], with["picked"], with["cells"], without["picked"], without["cells"], table.Money(root["cost"]))}
+	var rows []table.Row
+	for _, prompt := range table.AsRows(root["prompts"]) {
+		withSide := table.AsObject(prompt["with_search"])
+		withoutSide := table.AsObject(prompt["without_search"])
+		top := ""
+		if picks := table.AsRows(withoutSide["picks"]); len(picks) > 0 {
+			top = fmt.Sprint(picks[0]["tool"])
+		}
+		var installs []string
+		for _, item := range table.AsRows(withoutSide["installs"]) {
+			if len(installs) < 2 {
+				installs = append(installs, fmt.Sprint(item["package"]))
+			}
+		}
+		rows = append(rows, table.Row{
+			"lever": prompt["lever"], "task": prompt["prompt"],
+			"with_search":    fmt.Sprintf("%v/%v", withSide["ours"], withSide["cells"]),
+			"without_search": fmt.Sprintf("%v/%v", withoutSide["ours"], withoutSide["cells"]),
+			"top_pick":       top,
+			"installs":       strings.Join(installs, ", "),
+		})
+	}
+	if len(rows) > 0 {
+		lines = append(lines, table.Table(rows, []string{"lever", "task", "with_search", "without_search", "top_pick", "installs"}, map[string]string{"top_pick": "top pick without search", "installs": "installs instead"}))
+	}
+	if tools := table.AsRows(root["tools"]); len(tools) > 0 {
+		var shares []table.Row
+		for _, tool := range tools {
+			shares = append(shares, table.Row{"tool": tool["tool"], "with_search": table.AsObject(tool["with_search"])["picks"], "without_search": table.AsObject(tool["without_search"])["picks"]})
+		}
+		lines = append(lines, "picks by tool", table.Table(shares, []string{"tool", "with_search", "without_search"}, nil))
+	}
+	if installs := table.AsRows(root["installs"]); len(installs) > 0 {
+		lines = append(lines, "what the agents install", table.Table(installs, []string{"package", "with_search", "without_search"}, nil))
+	}
+	return lines
 }
 
 func aiFixesCmd() *cobra.Command {
