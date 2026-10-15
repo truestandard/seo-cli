@@ -177,9 +177,9 @@ func trackCmd() *cobra.Command {
 	c := &cobra.Command{Use: "track", Short: "rank checks: start one or read its status"}
 	run := trackRunCmd()
 	c.RunE = run.RunE
-	c.Args = exactArgs(0, "seo track [run | status <id>]")
+	c.Args = exactArgs(0, "seo track [run | status <id> | bing]")
 	c.Flags().AddFlagSet(run.Flags())
-	c.AddCommand(run, trackStatusCmd())
+	c.AddCommand(run, trackStatusCmd(), trackBingCmd())
 	return c
 }
 

@@ -102,9 +102,9 @@ func aiCmd() *cobra.Command {
 	c := &cobra.Command{Use: "ai", Short: "AI answer scans: run one, read the results, or check a scan"}
 	run := aiRunCmd()
 	c.RunE = run.RunE
-	c.Args = exactArgs(0, "seo ai [run | results | status <id> | fixes | agents]")
+	c.Args = exactArgs(0, "seo ai [run | results | status <id> | fixes | agents | demand]")
 	c.Flags().AddFlagSet(run.Flags())
-	c.AddCommand(run, aiResultsCmd(), aiStatusCmd(), aiFixesCmd(), aiAgentsCmd())
+	c.AddCommand(run, aiResultsCmd(), aiStatusCmd(), aiFixesCmd(), aiAgentsCmd(), aiDemandCmd())
 	return c
 }
 
