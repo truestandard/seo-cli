@@ -2,7 +2,7 @@
 
 ## Setup
 
-- Log in once: `seo auth login --token seo_…` (keys are issued by hand: email hello@truestandard.org, or get one with a client slot). CI and headless runs set `SEO_API_KEY=seo_…` instead; it wins over the saved key.
+- Log in once: `seo auth login --token seo_…`. CI and headless runs set `SEO_API_KEY=seo_…` instead; it wins over the saved key.
 - The default backend is `https://truestandard.agency`. Point at another one with `--api-url` or `SEO_API_URL`.
 - Confirm with `seo whoami`.
 - Pick a project once: `seo projects` then `seo use <slug>`. Override per call with `--project <slug>` or `SEO_PROJECT`.
