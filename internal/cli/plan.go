@@ -71,6 +71,12 @@ func planLines(data any) string {
 			lines = append(lines, lane, table.Table(rows, []string{"keyword", "track", "format", "floor", "expected_clicks", "drafting"}, nil))
 		}
 	}
+	if sets := table.AsRows(root["page_sets"]); len(sets) > 0 {
+		lines = append(lines, "page sets (a person approves)", table.Table(sets, []string{"pattern", "their_pages", "their_visits", "url", "drafting"}, nil))
+	}
+	if changelog := table.AsObject(root["changelog"]); changelog != nil {
+		lines = append(lines, fmt.Sprintf("changelog: %v from commits since %v", changelog["path"], changelog["since"]))
+	}
 	if human := table.AsRows(root["needs_human"]); len(human) > 0 {
 		lines = append(lines, "needs a person", table.Table(human, []string{"kind", "keyword", "human_reason"}, nil))
 	}

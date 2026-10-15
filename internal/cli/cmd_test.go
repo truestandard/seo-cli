@@ -133,13 +133,15 @@ func TestPlanLines(t *testing.T) {
 		"fixes":[{"severity":"critical","rule":"sitemap_non_200","count":2,"new":1,"how_to_fix":"Fix it."}],
 		"refreshes":[{"source":"decay","keyword":"comment search","page":"/cs","position":12,"value":4.1,"link_sources":[{"url":"https://taffy.test/hub","title":"Hub"}]}],
 		"new_pages":{"articles":[{"keyword":"how to search youtube comments","track":"C","format":"guide","floor":"winnable","expected_clicks":72,"drafting":"serp-outline + ai-seo"}],"comparisons":[],"free_tools":[{"keyword":"youtube comment picker","track":"tool","format":"tool"}]},
+		"page_sets":[{"pattern":"programmatic","their_pages":781,"their_visits":743442,"url":"https://vidiq.com/youtube-stats/top/","drafting":"programmatic-seo"}],
+		"changelog":{"path":"/changelog/2026-10-15","since":"2026-10-08"},
 		"needs_human":[{"kind":"forum_reply","keyword":"old comments","human_reason":"forum threads hold page one"}],
 		"deferred":[{"keyword":"x"}]}`
 	if err := json.Unmarshal([]byte(raw), &data); err != nil {
 		t.Fatal(err)
 	}
 	out := planLines(data)
-	for _, want := range []string{"site fixes", "sitemap_non_200", "refreshes", "decay", "articles", "free_tools", "youtube comment picker", "needs a person", "forum threads", "deferred: 1", "focus: comment search on /cs until 2026-11-13", "add internal links", "https://taffy.test/hub"} {
+	for _, want := range []string{"site fixes", "sitemap_non_200", "refreshes", "decay", "articles", "free_tools", "youtube comment picker", "needs a person", "forum threads", "deferred: 1", "focus: comment search on /cs until 2026-11-13", "add internal links", "https://taffy.test/hub", "page sets (a person approves)", "programmatic", "changelog: /changelog/2026-10-15 from commits since 2026-10-08"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
