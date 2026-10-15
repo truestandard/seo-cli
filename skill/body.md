@@ -75,6 +75,7 @@ The error envelope is `{"error": "<code>", "message": "<text>"}` plus any contex
 ```
 seo ranks --since 7d
 seo ai results --since 30d
+seo ai agents results
 seo scoreboard
 seo spend --since 7d
 ```

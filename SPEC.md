@@ -54,7 +54,7 @@ Auth      auth login --token | auth status | auth logout | whoami | login (hidde
 Project   projects | project show|create | use | context get|set|add-competitor|add-page|log
 Keywords  keywords list|add|update|remove | research* | triage* | serp* | floor*
 Ranks     track run*|status | ranks
-AI        prompts list|add | ai run*|results|status | mentions*
+AI        prompts list|add | ai run*|results|status | ai agents results|add|suggest*|run* | mentions*
 Site      backlinks* | domain* | audit run*|show|list|watch | gsc import|striking | links*|intersect* | fit* | gap* | competitors watch (--run*)|study* | ship | experiments list|add|outcome
 Plan      plan* [--articles N | --latest]
 Read      log | scoreboard | spend

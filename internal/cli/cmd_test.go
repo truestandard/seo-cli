@@ -294,3 +294,25 @@ func TestLinkIntersectLines(t *testing.T) {
 		t.Errorf("empty state: %s", got)
 	}
 }
+
+func TestAgentPanelLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"status":"completed","run_on":"2026-10-15","cost":0.71,
+		"ours":{"name":"Taffy","with_search":{"picked":2,"cells":12},"without_search":{"picked":0,"cells":12}},
+		"prompts":[{"prompt":"search youtube comments","lever":"citations","with_search":{"ours":2,"cells":4},"without_search":{"ours":0,"cells":4,"picks":[{"tool":"other","count":3}],"installs":[{"package":"yt-dlp","count":3}]}}],
+		"installs":[{"package":"yt-dlp","with_search":1,"without_search":3}],
+		"tools":[{"tool":"other","with_search":{"picks":5},"without_search":{"picks":9}}]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(agentPanelLines(data), "\n")
+	for _, want := range []string{"Taffy picked 2/12 with search, 0/12 without", "citations", "search youtube comments", "2/4", "0/4", "picks by tool", "what the agents install", "yt-dlp"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	empty := strings.Join(agentPanelLines(map[string]any{"status": "none", "prompts_in_set": 0, "set_name": "agent_tasks"}), "\n")
+	if !strings.Contains(empty, "seo ai agents add") {
+		t.Errorf("empty state should point at add: %s", empty)
+	}
+}
