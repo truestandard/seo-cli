@@ -276,3 +276,21 @@ func TestCompetitorStudyLines(t *testing.T) {
 		t.Errorf("empty study should point at the command: %v", empty)
 	}
 }
+
+func TestLinkIntersectLines(t *testing.T) {
+	var data map[string]any
+	raw := `{"status":"ok","domain":"taffy.test","cost":0.0603,"cached":false,
+		"domains":[{"domain":"roundup.test","rival_count":3,"linking_rivals":["alpha.test","beta.test","gamma.test"],"rank":61,"backlinks":72,"first_seen":"2024-11-20"}]}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.Join(linkIntersectLines(data), "\n")
+	for _, want := range []string{"1 sites link to 2+ of your rivals and not to taffy.test", "roundup.test", "alpha.test, beta.test, gamma.test", "rival_count"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if got := strings.Join(linkIntersectLines(map[string]any{"status": "none"}), ""); !strings.Contains(got, "seo links intersect") {
+		t.Errorf("empty state: %s", got)
+	}
+}
