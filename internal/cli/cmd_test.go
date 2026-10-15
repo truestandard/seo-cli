@@ -274,3 +274,16 @@ func TestCompetitorStudyLines(t *testing.T) {
 		t.Errorf("empty study should point at the command: %v", empty)
 	}
 }
+
+func TestRenderAuditShowsAgentReadable(t *testing.T) {
+	var data map[string]any
+	raw := `{"site_audit_run":{"id":7,"status":"completed","summary":{"agent_readable":{"llms_txt":true,"listed":413,"sitemap_urls":417,"llms_full":true,"markdown_ok":10,"markdown_sampled":10,"mcp":true,"install_command":true,"manifests":0}}}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := renderAudit(data)
+	want := "readable by AI agents: llms.txt true (413 of 417 sitemap URLs), llms-full.txt true, markdown copies 10 of 10 sampled, MCP true, install command true, manifests 0"
+	if !strings.Contains(out, want) {
+		t.Errorf("missing %q in:\n%s", want, out)
+	}
+}

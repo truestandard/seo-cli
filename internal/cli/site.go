@@ -177,6 +177,10 @@ func renderAudit(data any) string {
 	if retired := table.AsObject(summary["retired"]); len(retired) > 0 {
 		lines = append(lines, "retired "+table.SummaryOf(retired))
 	}
+	if readable := table.AsObject(summary["agent_readable"]); readable != nil {
+		lines = append(lines, fmt.Sprintf("readable by AI agents: llms.txt %v (%v of %v sitemap URLs), llms-full.txt %v, markdown copies %v of %v sampled, MCP %v, install command %v, manifests %v",
+			readable["llms_txt"], readable["listed"], readable["sitemap_urls"], readable["llms_full"], readable["markdown_ok"], readable["markdown_sampled"], readable["mcp"], readable["install_command"], readable["manifests"]))
+	}
 	if issues := table.AsRows(run["issues"]); len(issues) > 0 {
 		lines = append(lines, "issues", table.Table(issues, []string{"severity", "rule", "url", "detail"}, nil))
 	}
