@@ -92,8 +92,8 @@ seo gap <keyword> [--page /path --force]             paid, $0 to $0.002, cached 
 seo plan [--articles N | --latest]                   paid, cents
 seo competitors watch [--run]                        paid with --run
 seo competitors study <domain> [--section /path/]    paid, reused free for 30 days
-seo ship <url> [--keyword --track --note]
-seo experiments [list | add <change...> | outcome <id> <text...>]
+seo ship <url> --item ID [--force-reason --keyword --track --note]
+seo experiments [list | add <change...> --ship ID | outcome <id> <text...>]
 seo log [--kind --days]
 seo scoreboard
 seo spend [--since 30d]
