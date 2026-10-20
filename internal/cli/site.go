@@ -351,6 +351,7 @@ func linksCmd() *cobra.Command {
 	c.Flags().String("keyword", "", "keyword the page targets")
 	c.Flags().Int("limit", 0, "sources to return (default 5)")
 	c.AddCommand(linksIntersectCmd())
+	c.AddCommand(linksQueueCmd())
 	return c
 }
 
