@@ -32,7 +32,7 @@ seo ranks --since 7d --pretty
 seo mcp
 ```
 
-`auth login` checks the key against the backend and saves it to `~/.seo/credentials.json` with owner-only permissions. Until the hosted signup is live, [email us for a key](mailto:hello@truestandard.org?subject=seo%20CLI%20key&body=Hi%2C%0A%0AI%27d%20like%20a%20key%20for%20the%20seo%20CLI.%0A%0AProduct%3A%20%0ADomain%3A%20%0AWhat%20I%20want%20to%20track%3A%20%0A%0AThanks) with your product and domain; it comes back by email.
+`auth login` checks the key against the backend and saves it to `~/.seo/credentials.json` with owner-only permissions. We don't give out keys yet. We run the CLI ourselves, on our own products and for clients of [TrueStandard Agency](https://truestandard.agency).
 
 ## Add it to your agent
 
@@ -168,4 +168,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY
 
 ## License
 
-MIT. Built by [TrueStandard Labs](https://truestandard.org), the studio behind [TrueStandard](https://truestandard.ai), [Gavel](https://usegavel.com) and [Precis](https://precis.health). The hosted TrueStandard Agency is on its way; email us for a key meanwhile.
+MIT. Built by [TrueStandard Labs](https://truestandard.org), the studio behind [TrueStandard](https://truestandard.ai), [Gavel](https://usegavel.com) and [Precis](https://precis.health).
