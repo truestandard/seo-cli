@@ -274,42 +274,56 @@ func gscStrikingCmd() *cobra.Command {
 func shipCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "ship <url>",
-		Short: "record a shipped page and verify it answers 200 with an h1",
-		Args:  exactArgs(1, "seo ship <url> [--keyword] [--track] [--note]"),
+		Short: "the one door for a live page: verify it answers 200 with an h1 and start its watch",
+		Long:  "Ship a plan item with --item ID. A new page, rewrite, refresh or merge ships only after seo qa approves it; --force-reason ships it anyway and records why. Fix, get_found and link items need no check. A verified ship sets the item to watching; a failed one leaves the item as it was.",
+		Args:  exactArgs(1, "seo ship <url> --item ID [--force-reason] [--keyword] [--track] [--note]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, slug, err := projectClient()
 			if err != nil {
 				return err
 			}
 			data, err := client.Post(api.ProjectPath(slug, "/ship"), compact(map[string]any{
-				"url": args[0], "keyword": optString(cmd, "keyword"), "track": optString(cmd, "track"), "note": optString(cmd, "note"),
+				"url": args[0], "plan_item_id": optInt(cmd, "item"), "force_reason": optString(cmd, "force-reason"),
+				"keyword": optString(cmd, "keyword"), "track": optString(cmd, "track"), "note": optString(cmd, "note"),
 			}))
 			if err != nil {
 				return err
 			}
-			output.Render(data, func() string {
-				event := table.First(table.AsObject(data), "ship_event", "ship")
-				url := event["url"]
-				if url == nil {
-					url = args[0]
-				}
-				keyword := event["keyword"]
-				if keyword == nil {
-					keyword = optString(cmd, "keyword")
-				}
-				summary := table.SummaryLine([]table.Pair{
-					{Key: "url", Value: url}, {Key: "verified", Value: event["verified"]}, {Key: "http_status", Value: event["http_status"]},
-					{Key: "h1", Value: event["h1"]}, {Key: "keyword", Value: keyword},
-				})
-				return joinLines(append([]string{summary}, linkSourceLines(table.AsObject(event["link_sources"]), []string{"path", "title", "level", "links_now"})...), "\n")
-			})
+			output.Render(data, func() string { return renderShip(data, args[0], optString(cmd, "keyword")) })
 			return nil
 		},
 	}
+	c.Flags().Int("item", 0, "plan item id this page ships")
+	c.Flags().String("force-reason", "", "ship a page item that seo qa has not approved, and record why")
 	c.Flags().String("keyword", "", "keyword the page targets")
 	c.Flags().String("track", "", "track label")
 	c.Flags().String("note", "", "free-text note")
 	return c
+}
+
+func renderShip(data any, fallbackURL string, fallbackKeyword any) string {
+	result := table.AsObject(data)
+	event := table.First(result, "ship_event", "ship")
+	url := event["url"]
+	if url == nil {
+		url = fallbackURL
+	}
+	keyword := event["keyword"]
+	if keyword == nil {
+		keyword = fallbackKeyword
+	}
+	summary := table.SummaryLine([]table.Pair{
+		{Key: "url", Value: url}, {Key: "verified", Value: event["verified"]}, {Key: "http_status", Value: event["http_status"]},
+		{Key: "h1", Value: event["h1"]}, {Key: "keyword", Value: keyword},
+	})
+	lines := []string{summary}
+	if item := table.AsObject(result["plan_item"]); len(item) > 0 {
+		lines = append(lines, table.SummaryLine([]table.Pair{{Key: "item", Value: item["id"]}, {Key: "kind", Value: item["kind"]}, {Key: "status", Value: item["status"]}, {Key: "watch", Value: result["page_watch_id"]}}))
+	}
+	if reason, ok := result["reason"].(string); ok && reason != "" {
+		lines = append(lines, "not shipped: "+reason)
+	}
+	return joinLines(append(lines, linkSourceLines(table.AsObject(event["link_sources"]), []string{"path", "title", "level", "links_now"})...), "\n")
 }
 
 func linksCmd() *cobra.Command {
@@ -526,7 +540,7 @@ func linkSourceLines(result table.Row, columns []string) []string {
 	return lines
 }
 
-var experimentColumns = []string{"id", "shipped_on", "page", "change", "hypothesis", "outcome", "outcome_on"}
+var experimentColumns = []string{"id", "shipped_on", "page", "ship_event_id", "change", "hypothesis", "outcome", "outcome_on"}
 
 func experimentsCmd() *cobra.Command {
 	c := &cobra.Command{Use: "experiments", Short: "on-page experiments and their outcomes"}
@@ -566,8 +580,8 @@ func experimentsListCmd() *cobra.Command {
 func experimentsAddCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "add <change...>",
-		Short: "record an experiment (what changed)",
-		Args:  minArgs(1, "seo experiments add <change...> [--page --hypothesis --keyword --shipped-on]"),
+		Short: "record an experiment (what changed) on a page that went live through seo ship",
+		Args:  minArgs(1, "seo experiments add <change...> --ship ID | --page /path [--hypothesis --keyword --shipped-on]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, slug, err := projectClient()
 			if err != nil {
@@ -575,7 +589,7 @@ func experimentsAddCmd() *cobra.Command {
 			}
 			data, err := client.Post(api.ProjectPath(slug, "/experiments"), compact(map[string]any{
 				"change": joinArgs(args), "page": optString(cmd, "page"), "hypothesis": optString(cmd, "hypothesis"),
-				"keyword": optString(cmd, "keyword"), "shipped_on": optString(cmd, "shipped-on"),
+				"keyword": optString(cmd, "keyword"), "shipped_on": optString(cmd, "shipped-on"), "ship_event_id": optInt(cmd, "ship"),
 			}))
 			if err != nil {
 				return err
@@ -584,7 +598,8 @@ func experimentsAddCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().String("page", "", "page path the change shipped on")
+	c.Flags().Int("ship", 0, "verified ship id the change went live with")
+	c.Flags().String("page", "", "page path the change shipped on (must have a verified seo ship)")
 	c.Flags().String("hypothesis", "", "why it should move the needle")
 	c.Flags().String("keyword", "", "keyword it targets")
 	c.Flags().String("shipped-on", "", "YYYY-MM-DD (default today)")

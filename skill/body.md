@@ -40,8 +40,8 @@ seo gap <keyword> [--page /path --force]                         paid, $0 to $0.
 seo plan [--articles N | --latest]                               paid, cents: the week's fixes, refreshes, pages, free tools, and what needs a person
 seo competitors watch [--run]                                    read the weekly watch; --run is paid, about $0.08 per competitor
 seo competitors study <domain> [--section /templates/]           a rival's visits by section in every market and the page types you lack; about $0.13, a section $0.04
-seo ship <url> [--keyword --track --note]                        verifies, ranks link sources, checks which link now
-seo experiments [list] | add <change...> [--page --hypothesis --keyword --shipped-on] | outcome <id> <text...>
+seo ship <url> --item ID [--force-reason --note]                 the only door: verifies, starts the watch, ranks link sources; page items need seo qa first
+seo experiments [list] | add <change...> --ship ID | --page /path [--hypothesis --keyword --shipped-on] | outcome <id> <text...>
 seo log [--kind --days]
 seo scoreboard
 seo spend [--since 30d]
