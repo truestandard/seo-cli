@@ -143,7 +143,7 @@ func aiAgentsAddCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().Bool("locked", false, "lock the tasks so the monthly run measures them")
+	c.Flags().Bool("locked", false, "lock the tasks so every later agent run measures the same set")
 	return c
 }
 
