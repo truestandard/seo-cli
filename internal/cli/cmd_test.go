@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/truestandard/seo-cli/internal/table"
 )
 
 func TestSince(t *testing.T) {
@@ -54,6 +56,17 @@ func TestBodyAddsDryRunOnlyWhenSet(t *testing.T) {
 	}
 	if _, has := payload["a"]; has {
 		t.Fatal("nil field kept")
+	}
+}
+
+func TestScanFieldsShowWhoStartedTheScan(t *testing.T) {
+	var data any
+	if err := json.Unmarshal([]byte(`{"ai_scan":{"id":45,"status":"completed","set_name":"guarantee","actor":"autopilot-mac-mini"}}`), &data); err != nil {
+		t.Fatal(err)
+	}
+	out := table.KeyValueBlock(scanFields(data))
+	if !strings.Contains(out, "actor") || !strings.Contains(out, "autopilot-mac-mini") {
+		t.Errorf("missing actor in:\n%s", out)
 	}
 }
 

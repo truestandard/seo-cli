@@ -385,7 +385,7 @@ func aiStatusCmd() *cobra.Command {
 
 func scanFields(data any) []table.Pair {
 	scan := table.First(table.AsObject(data), "ai_scan", "scan")
-	return fieldsOf(scan, "id", "status", "run_on", "set_name", "models", "runs_per_cell", "cost", "summary")
+	return fieldsOf(scan, "id", "status", "run_on", "set_name", "actor", "models", "runs_per_cell", "cost", "summary")
 }
 
 func renderVisibility(data any) string {
